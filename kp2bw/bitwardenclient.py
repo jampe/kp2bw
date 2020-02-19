@@ -53,6 +53,6 @@ class BitwardenClient():
         # string escaping due to echo "string"
         json_str = json_str.replace('"', r'\"')
 
-        output = self._exec_with_session(f'echo "{json_str}" | bw encode')
+        output = self._exec_with_session(f'echo "{json_str}" | bw encode | bw create item')
 
         return not "error" in output

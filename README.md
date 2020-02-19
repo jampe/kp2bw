@@ -4,7 +4,9 @@ This tool helps to convert existing KeePass databases to Bitwarden accounts. Thi
 
 * Import the all the data without having it ever touching the disk in unencrypted form
 * Generate folders in Bitwarden based on your KeePass folder structure
-  * If you have several folder levels in KeePass, it will only create a folder for the highest level folder. Bitwarden does not support nested folders.
+  * If you have nested folder in KeePass, you can choose between two handling mechanisms for the folder creation as Bitwarden does not support nested folders:
+    * root-only: The highest folder in the nesting hierarchy will be used to store all entries of the tree: All entries in foo and foo/bar will be stored in a folder foo in Bitwarden.
+    * combine: The nested folders will be preserved as own folders and named like this: foo/bar in KeePass results in a foo-bar folder in Bitwarden
 * Resolve KeePass reference entries (username and password only) in a "Bitwarden" way. For each entry with a reference field, the following happens:
   * If username and password are identical to the referenced entry, the url field will be added to the already existing entry
   * Otherwise, a new entry is created
@@ -25,11 +27,17 @@ bw login username
 
 After that, you can use the kp2bw.py tool to import the data. The help text of the tool is listed below:
 ```
-usage: kp2bw.py [-h] -kpfile KPFILE -kppw KPPW -bwpw BWPW
+usage: kp2bw.py [-h] -kpfile KPFILE [-kppw KPPW] [-bwpw BWPW] [-y] [-folder-generation-mode FOLDER_GENERATION_MODE]
+
+required arguments:
+  -kpfile KPFILE        Path to your KeePass 2.x db.
 
 optional arguments:
-  -h, --help      show this help message and exit
-  -kpfile KPFILE  Path to your KeePass 2.x db.
-  -kppw KPPW      KeePass db password
-  -bwpw BWPW      Bitwarden Password
+  -h, --help            show this help message and exit
+  -kppw KPPW            KeePass db password
+  -bwpw BWPW            Bitwarden Password
+  -y                    Skips the confirm bw installation question
+  -folder-generation-mode FOLDER_GENERATION_MODE
+                        Set the folder generation mode. Options: root-only => nested or not, only the root folder of the folder tree is created, combine => nested folders will be created with a combined name.
+                        E.g. foo/bar in KeePass results in a foo-bar folder in Bitwarden.
 ```
