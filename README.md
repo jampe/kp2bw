@@ -13,9 +13,20 @@ This tool helps to convert existing KeePass databases to Bitwarden accounts. Thi
     * root-only: The highest folder in the nesting hierarchy will be used to store all entries of the tree: All entries in foo and foo/bar will be stored in a folder foo in Bitwarden.
     * combine: The nested folders will be preserved as own folders and named like this: foo/bar in KeePass results in a foo-bar folder in Bitwarden
 * Importing of the entries one by one, it is slower but it will prevent bitwarden db query max time exceeded errors for bigger KeePass databases
+* Windows, macOS, & Linux supported.
+
+## Installation
+Clone this repository and enter the directory. Install the tool dependencies using:
+```
+pip install -r requirements.txt
+
+or
+
+pipenv install -r requirements.txt
+```
 
 ## Usage
-First, make sure you install the Bitwarden CLI tool on your system. After installing, set up the client:
+First, make sure you install the Bitwarden CLI tool on your system (https://help.bitwarden.com/article/cli/). After installing, set up the client:
 
 If you use a on premise installation, set your url like this:
 ```
@@ -27,7 +38,12 @@ Now, you have to log into your account once:
 bw login username
 ```
 
-After that, you can use the kp2bw.py tool to import the data. The help text of the tool is listed below:
+After that, you can use the kp2bw.py tool to import the data. This file is located in the kp2bw folder. Execute it using:
+```
+python kp2bw/kp2bw.py -kpfile passwords.kdbx
+```
+
+The help text of the tool is listed below:
 ```
 usage: kp2bw.py [-h] -kpfile KPFILE [-kppw KPPW] [-bwpw BWPW] [-y] [-folder-generation-mode FOLDER_GENERATION_MODE]
 
