@@ -1,13 +1,15 @@
 import json
 import os
 
+from itertools import groupby
+
 from subprocess import check_output, STDOUT, CalledProcessError
 
 class BitwardenClient():
     def __init__(self, password):
         # login
-        self.key = self._exec(f"bw unlock {password} --raw")
-        if "error" in self.key:
+        self._key = self._exec(f"bw unlock {password} --raw")
+        if "error" in self._key:
             raise Exception("Could not unlock the bitwarden db. Is the Master Password corrent and are bw cli tools set up correctly?")
 
         # make sure data is up to date
@@ -15,7 +17,10 @@ class BitwardenClient():
             raise Exception("Could not sync the local state to your bitwarden server")
 
         # get folder list
-        self.folders = {folder["name"]: folder["id"] for folder in json.loads(self._exec_with_session("bw list folders"))}
+        self._folders = {folder["name"]: folder["id"] for folder in json.loads(self._exec_with_session("bw list folders"))}
+
+        # get existing entries
+        self._folder_entries = self._get_existing_folder_entries()
  
     def _exec(self, command):
         try:
@@ -24,16 +29,28 @@ class BitwardenClient():
             output = e.output
         
         return str(output.decode("utf-8"))
-    
+
+    def _get_existing_folder_entries(self):
+        folder_id_lookup_helper = {folder_id: folder_name for folder_name,folder_id in self._folders.items()}
+        items = json.loads(self._exec_with_session("bw list items"))
+        
+        # fix None folderIds for entries without folders
+        for item in items:
+            if not item['folderId']:
+                item['folderId'] = ''
+
+        items.sort(key=lambda item: item["folderId"])
+        return {folder_id_lookup_helper[folder_id] if folder_id in folder_id_lookup_helper else None: [entry["name"] for entry in entries] 
+            for folder_id, entries in groupby(items, key=lambda item: item["folderId"])}
 
     def _exec_with_session(self, command):
-        return self._exec(f"{command} --session {self.key}")
+        return self._exec(f"{command} --session {self._key}")
 
     def has_folder(self, folder):
-        return folder in self.folders
+        return folder in self._folders
 
     def create_folder(self, folder):
-        if self.has_folder(folder):
+        if not folder or self.has_folder(folder):
             return
 
         data = {"name": folder }
@@ -41,13 +58,20 @@ class BitwardenClient():
 
         output_obj = json.loads(output)
 
-        self.folders[output_obj["name"]] = output_obj["id"]
+        self._folders[output_obj["name"]] = output_obj["id"]
 
     def create_entry(self, folder, entry):
-        self.create_folder(folder)
+        # check if already exists
+        if folder in self._folder_entries and entry["name"] in self._folder_entries[folder]:
+            print(f"-- Entry {entry['name']} already exists in folder {folder}. skipping...")
+            return "skip"
 
-        # set id
-        entry["folderId"] = self.folders[folder]
+        # create folder if exists
+        if folder:
+            self.create_folder(folder)
+
+            # set id
+            entry["folderId"] = self._folders[folder]
 
         json_str = json.dumps(entry)
 

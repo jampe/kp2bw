@@ -51,8 +51,8 @@ class Converter():
         }
 
     def _generate_folder_name(self, entry):
-        if not entry.group.path:
-            return ""
+        if not entry.group.path or entry.group.path == "/":
+            return None
         
         path = entry.group.path[:-1]
 
@@ -146,7 +146,12 @@ class Converter():
         print(f"Parsed {len(self._entries)} entries")
 
     def _resolve_entries_with_references(self):
-        print(f"Resolving {len(self._kp_ref_entries)} REF entries now...")
+        ref_entries_length = len(self._kp_ref_entries)
+
+        if ref_entries_length == 0:
+            return
+
+        print(f"Resolving {ref_entries_length} REF entries now...")
         for kp_entry in self._kp_ref_entries:
             try:
                 # replace values
@@ -177,6 +182,8 @@ class Converter():
                 
             except Exception as e:
                 print(f"!! Could not resolve entry for {kp_entry.group.path}{kp_entry.title} [{str(kp_entry.uuid)}] !!")
+        
+        print(f"Resolved {ref_entries_length} REF entries")
 
     def _create_bitwarden_items_for_entries(self):
         i = 1
@@ -192,10 +199,15 @@ class Converter():
             
             print(f"[{i} of {max_i}] Creating Bitwarden entry in {folder} for {bw_item_object['name']}...")
             
+            # create entry
             output = bw.create_entry(folder, bw_item_object)
             if "error" in output:
                 print(f"!! ERROR: Creation of entry failed: {output} !!")
+                continue
+            if "skip" in output:
+                continue
             
+            # upload attachments
             if attachments:
                 item_id = json.loads(output)["id"]
 

@@ -9,6 +9,7 @@ This tool helps to convert existing KeePass databases to Bitwarden accounts. Thi
 * **Importing custom properties** from KeePass. The properties will be stored as text custom field in the corresponding Bitwarden item. If the property value is longer than 10,000 chars, it will be uploaded as attachment (Bitwarden limitation)
 * **Importing attachments** from KeePass
 * **Importing notes longer than 10,000 chars**. Notes can't be longer than this. The notes will be imported as an attachment named notes.txt.
+* **Idempotent import**: Entries won't be duplicated when running the import multiple times.
 * **Auto generate folders** in Bitwarden based on your KeePass folder structure
   * If you have nested folder in KeePass, you can choose between two handling mechanisms for the folder creation as Bitwarden does not support nested folders:
     * root-only: The highest folder in the nesting hierarchy will be used to store all entries of the tree: All entries in foo and foo/bar will be stored in a folder foo in Bitwarden.
