@@ -1,4 +1,4 @@
-# KP2BW Converter
+# KP2BW - KeePass 2.x to Bitwarden Converter / Migrator
 
 This tool helps to convert existing KeePass databases to Bitwarden accounts. This tool brings the following advantages over the bitwarden importer:
 
