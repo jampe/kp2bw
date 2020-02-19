@@ -10,6 +10,7 @@ This tool helps to convert existing KeePass databases to Bitwarden accounts. Thi
 * Resolve KeePass reference entries (username and password only) in a "Bitwarden" way. For each entry with a reference field, the following happens:
   * If username and password are identical to the referenced entry, the url field will be added to the already existing entry
   * Otherwise, a new entry is created
+* Importing custom properties from KeePass. The properties will be stored as text custom field in the corresponding Bitwarden item.
 * Importing of the entries one by one, it is slower but it will prevent bitwarden db query max time exceeded errors for bigger KeePass databases
 
 ## Usage

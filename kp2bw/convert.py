@@ -26,7 +26,7 @@ class Converter():
             "password": "P"
         }
 
-    def _create_bw_python_object(self, title, notes, url, username, password):
+    def _create_bw_python_object(self, title, notes, url, username, password, custom_properties):
         return {
             "organizationId": None,
             "folderId": None,
@@ -34,7 +34,7 @@ class Converter():
             "name": title,
             "notes":notes,
             "favorite":False,
-            "fields":[],
+            "fields":[{"name": key,"value": value,"type":0} for key, value in custom_properties.items() if len(value) <= 10000],
             "login": {
                 "uris":[
                     {"match": None,"uri": url}
@@ -68,7 +68,8 @@ class Converter():
             notes =  entry.notes if entry.notes else '',
             url = entry.url if entry.url else '',
             username = entry.username if entry.title else '',
-            password = entry.password if entry.title else ''
+            password = entry.password if entry.title else '',
+            custom_properties = entry.custom_properties
         )
 
         folder = self._generate_folder_name(entry)
