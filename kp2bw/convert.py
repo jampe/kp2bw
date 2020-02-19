@@ -5,6 +5,7 @@ from pykeepass import PyKeePass
 from bitwardenclient import BitwardenClient
 
 KP_REF_IDENTIFIER = "{REF:"
+MAX_CUSTOM_PROPERTY_LENGTH = 10 * 1000
 
 class FolderGenerationMode(Enum):
     ROOT_ONLY = 1
@@ -34,7 +35,7 @@ class Converter():
             "name": title,
             "notes":notes,
             "favorite":False,
-            "fields":[{"name": key,"value": value,"type":0} for key, value in custom_properties.items() if len(value) <= 10000],
+            "fields":[{"name": key,"value": value,"type":0} for key, value in custom_properties.items() if len(value) <= MAX_CUSTOM_PROPERTY_LENGTH],
             "login": {
                 "uris":[
                     {"match": None,"uri": url}
@@ -74,7 +75,15 @@ class Converter():
 
         folder = self._generate_folder_name(entry)
 
-        self._entries[str(entry.uuid).replace("-", "").upper()] = (folder, bw_item_object)
+        # get attachments to store later on
+        attachments = [(key, value) for key,value in entry.custom_properties.items() if len(value) > MAX_CUSTOM_PROPERTY_LENGTH]
+        
+        if entry.attachments or attachments:
+            attachments += entry.attachments
+            self._entries[str(entry.uuid).replace("-", "").upper()] = (folder, bw_item_object, attachments)
+
+        else:
+            self._entries[str(entry.uuid).replace("-", "").upper()] = (folder, bw_item_object)
 
     def _parse_kp_ref_string(self, ref_string):
         # {REF:U@I:CFC0141068E83547BCEEAF0C1ADABAE0}
@@ -171,12 +180,28 @@ class Converter():
         max_i = len(self._entries)
 
         bw = BitwardenClient(self._bitwarden_password)
-        for kp_id, (folder, bw_item_object) in self._entries.items():
+        for kp_id, value in self._entries.items():
+            if len(value) == 2:
+                (folder, bw_item_object) = value
+                attachments = None
+            else:
+                (folder, bw_item_object, attachments) = value
+            
             print(f"[{i} of {max_i}] Creating Bitwarden entry in {folder} for {bw_item_object['name']}...")
             
-            if not bw.create_entry(folder, bw_item_object):
-                print("!! ERROR: Creattion of entry failed !!")
+            output = bw.create_entry(folder, bw_item_object)
+            if "error" in output:
+                print(f"!! ERROR: Creation of entry failed: {output} !!")
             
+            if attachments:
+                item_id = json.loads(output)["id"]
+
+                for attachment in attachments:
+                    print(f"        - Uploading attachment for item {bw_item_object['name']}...")
+                    res = bw.create_attachement(item_id, attachment)
+                    if "failed" in res:
+                        print(f"!! ERROR: Uploading attachment failed: {res}")
+
             i += 1
 
 

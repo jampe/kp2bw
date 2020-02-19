@@ -1,4 +1,5 @@
 import json
+import os
 
 from subprocess import check_output, STDOUT, CalledProcessError
 
@@ -55,4 +56,28 @@ class BitwardenClient():
 
         output = self._exec_with_session(f'echo "{json_str}" | bw encode | bw create item')
 
-        return not "error" in output
+        return output
+    
+    def create_attachement(self, item_id, attachment):
+        # store attachement on disk
+        filename = ""
+        data = None
+        if isinstance(attachment, tuple):
+            # long custom property
+            key, value = attachment
+            filename = key + ".txt"
+            data = value.encode("UTF-8")
+        else:
+            # real kp attachment
+            filename = attachment.filename
+            data = attachment.data
+
+        with open(filename, "wb") as f:
+            f.write(data)
+        
+        try:
+            output = self._exec_with_session(f'bw create attachment --file ./{filename} --itemid {item_id}')
+        finally:
+            os.remove(filename)
+        
+        return output
