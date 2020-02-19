@@ -1,6 +1,7 @@
 import argparse
 import sys
 import getpass
+import logging
 
 from convert import Converter, FolderGenerationMode
 
@@ -24,6 +25,7 @@ if __name__ == "__main__":
     parser.add_argument('-kppw', dest='kppw', help='KeePass db password', default=None)
     parser.add_argument('-bwpw', dest='bwpw', help='Bitwarden Password', default=None)
     parser.add_argument('-y', dest='skip_confirm', help='Skips the confirm bw installation question', action="store_const", const=True, default=False)
+    parser.add_argument('-v', dest='verbose', help='Verbose output', action="store_const", const=True, default=False)
     parser.add_argument('-folder-generation-mode', dest='folder_generation_mode', default="root-only", help='Set the folder generation mode. Options: root-only => nested or not, only the root folder of the folder tree is created, combine => nested folders will be created with a combined name. E.g. foo/bar in KeePass results in a foo-bar folder in Bitwarden.')
 
     args = parser.parse_args()
@@ -38,6 +40,11 @@ if __name__ == "__main__":
         parser.print_help()
         sys.exit(2)
 
+    # logging
+    if args.verbose:
+        logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.DEBUG)
+    else:
+        logging.basicConfig(format='%(levelname)s: %(message)s',level=logging.INFO)
 
     # bw confirmation
     if not args.skip_confirm:

@@ -1,5 +1,6 @@
 import json
 import os
+import logging
 
 from itertools import groupby
 
@@ -24,10 +25,12 @@ class BitwardenClient():
  
     def _exec(self, command):
         try:
+            logging.debug(f"-- Executing command: {command}")
             output = check_output(command, stderr=STDOUT, shell=True)
         except CalledProcessError as e:
             output = e.output
         
+        logging.debug(f"  -- Output: {output}")
         return str(output.decode("utf-8"))
 
     def _get_existing_folder_entries(self):
@@ -63,7 +66,7 @@ class BitwardenClient():
     def create_entry(self, folder, entry):
         # check if already exists
         if folder in self._folder_entries and entry["name"] in self._folder_entries[folder]:
-            print(f"-- Entry {entry['name']} already exists in folder {folder}. skipping...")
+            logging.info(f"-- Entry {entry['name']} already exists in folder {folder}. skipping...")
             return "skip"
 
         # create folder if exists

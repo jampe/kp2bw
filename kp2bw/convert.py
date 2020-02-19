@@ -1,4 +1,6 @@
 import json
+import logging
+
 from enum import Enum
 from pykeepass import PyKeePass
 
@@ -106,7 +108,7 @@ class Converter():
             try:
                 return self._entries[ref_compare_string]
             except Exception as e:
-                print(f"!! - Could not resolve REF to {ref_compare_string} !!")
+                logging.warning(f"!! - Could not resolve REF to {ref_compare_string} !!")
                 raise e
         else:
             raise Exception("Unsupported REF lookup_mode")
@@ -126,7 +128,7 @@ class Converter():
         self._kp_ref_entries = []
         self._entries = {}
 
-        print(f"Found {len(kp.entries)} entries in KeePass DB. Parsing now...")
+        logging.info(f"Found {len(kp.entries)} entries in KeePass DB. Parsing now...")
         for entry in kp.entries:
             if not entry.password and not entry.username and not entry.notes:
                 continue
@@ -143,7 +145,7 @@ class Converter():
             # Normal entry
             self._add_bw_entry_to_entires_dict(entry)
 
-        print(f"Parsed {len(self._entries)} entries")
+        logging.debug(f"Parsed {len(self._entries)} entries")
 
     def _resolve_entries_with_references(self):
         ref_entries_length = len(self._kp_ref_entries)
@@ -151,7 +153,7 @@ class Converter():
         if ref_entries_length == 0:
             return
 
-        print(f"Resolving {ref_entries_length} REF entries now...")
+        logging.info(f"Resolving {ref_entries_length} REF entries now...")
         for kp_entry in self._kp_ref_entries:
             try:
                 # replace values
@@ -181,9 +183,9 @@ class Converter():
                     self._add_bw_entry_to_entires_dict(kp_entry)
                 
             except Exception as e:
-                print(f"!! Could not resolve entry for {kp_entry.group.path}{kp_entry.title} [{str(kp_entry.uuid)}] !!")
+                logging.warning(f"!! Could not resolve entry for {kp_entry.group.path}{kp_entry.title} [{str(kp_entry.uuid)}] !!")
         
-        print(f"Resolved {ref_entries_length} REF entries")
+        logging.debug(f"Resolved {ref_entries_length} REF entries")
 
     def _create_bitwarden_items_for_entries(self):
         i = 1
@@ -197,12 +199,12 @@ class Converter():
             else:
                 (folder, bw_item_object, attachments) = value
             
-            print(f"[{i} of {max_i}] Creating Bitwarden entry in {folder} for {bw_item_object['name']}...")
+            logging.info(f"[{i} of {max_i}] Creating Bitwarden entry in {folder} for {bw_item_object['name']}...")
             
             # create entry
             output = bw.create_entry(folder, bw_item_object)
-            if "error" in output:
-                print(f"!! ERROR: Creation of entry failed: {output} !!")
+            if "error" in output.lower():
+                logging.error(f"!! ERROR: Creation of entry failed: {output} !!")
                 continue
             if "skip" in output:
                 continue
@@ -212,10 +214,10 @@ class Converter():
                 item_id = json.loads(output)["id"]
 
                 for attachment in attachments:
-                    print(f"        - Uploading attachment for item {bw_item_object['name']}...")
+                    logging.info(f"        - Uploading attachment for item {bw_item_object['name']}...")
                     res = bw.create_attachement(item_id, attachment)
                     if "failed" in res:
-                        print(f"!! ERROR: Uploading attachment failed: {res}")
+                        logging.error(f"!! ERROR: Uploading attachment failed: {res}")
 
             i += 1
 
