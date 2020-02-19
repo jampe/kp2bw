@@ -5,7 +5,7 @@ from pykeepass import PyKeePass
 from bitwardenclient import BitwardenClient
 
 KP_REF_IDENTIFIER = "{REF:"
-MAX_CUSTOM_PROPERTY_LENGTH = 10 * 1000
+MAX_BW_ITEM_LENGTH = 10 * 1000
 
 class FolderGenerationMode(Enum):
     ROOT_ONLY = 1
@@ -35,7 +35,7 @@ class Converter():
             "name": title,
             "notes":notes,
             "favorite":False,
-            "fields":[{"name": key,"value": value,"type":0} for key, value in custom_properties.items() if len(value) <= MAX_CUSTOM_PROPERTY_LENGTH],
+            "fields":[{"name": key,"value": value,"type":0} for key, value in custom_properties.items() if len(value) <= MAX_BW_ITEM_LENGTH],
             "login": {
                 "uris":[
                     {"match": None,"uri": url}
@@ -66,7 +66,7 @@ class Converter():
     def _add_bw_entry_to_entires_dict(self, entry):
         bw_item_object = self._create_bw_python_object(
             title = entry.title if entry.title else '',
-            notes =  entry.notes if entry.notes else '',
+            notes =  entry.notes if entry.notes and len(entry.notes) <= MAX_BW_ITEM_LENGTH else '',
             url = entry.url if entry.url else '',
             username = entry.username if entry.title else '',
             password = entry.password if entry.title else '',
@@ -76,8 +76,11 @@ class Converter():
         folder = self._generate_folder_name(entry)
 
         # get attachments to store later on
-        attachments = [(key, value) for key,value in entry.custom_properties.items() if len(value) > MAX_CUSTOM_PROPERTY_LENGTH]
+        attachments = [(key, value) for key,value in entry.custom_properties.items() if len(value) > MAX_BW_ITEM_LENGTH]
         
+        if entry.notes and len(entry.notes) > MAX_BW_ITEM_LENGTH:
+            attachments.append(("notes", entry.notes))
+
         if entry.attachments or attachments:
             attachments += entry.attachments
             self._entries[str(entry.uuid).replace("-", "").upper()] = (folder, bw_item_object, attachments)
