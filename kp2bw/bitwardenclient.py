@@ -9,6 +9,10 @@ from subprocess import check_output, STDOUT, CalledProcessError
 
 class BitwardenClient():
     def __init__(self, password):
+        # check for bw cli installation
+        if not "bitwarden" in self._exec("bw"):
+            raise Exception("Bitwarden Cli not installed! See https://help.bitwarden.com/article/cli/#download--install for help")
+        
         # login
         self._key = self._exec(f"bw unlock {password} --raw")
         if "error" in self._key:
