@@ -12,12 +12,9 @@ class MyArgParser(argparse.ArgumentParser):
         sys.exit(2)
 
 if __name__ == "__main__":
-    print("kp2bw")
-    print("=============================")
-    print("by github.com/jampe")
-    print(" ")
-    print("!! Make sure that you have bw installed and it's set up (use bw config to set on presmise server and execute bw login once! This script uses bw unlock only)")
-    print("=============================")
+    print("⁻" * 58)
+    print("--[kp2bw - KeePass 2.x to Bitwarden converter by @jampe]--")
+    print("-" * 58)
     print(" ")
 
     parser = MyArgParser()
@@ -48,9 +45,14 @@ if __name__ == "__main__":
 
     # bw confirmation
     if not args.skip_confirm:
-        confirm = None
+        confirm = None    
+        print("Do you have bw cli installed and is it set up?")
+        print("1) If you use an on premise installation, use bw config to set the url: bw config server <url>")
+        print("2) execute bw login once, as this script uses bw unlock only: bw login <user>")
+        print(" ")
+
         while(confirm != "y" and confirm != "n"):
-            confirm = input("Confirm that you have set up bw [y/n]:")
+            confirm = input("Confirm that you have set up bw cli [y/n]: ").lower()
         
         if confirm == "n":
             print("exiting...")
@@ -68,3 +70,6 @@ if __name__ == "__main__":
     # call converter
     c = Converter(args.kpfile, kppw, bwpw, args.folder_generation_mode)
     c.convert()
+
+    print(" ")
+    print("All done.")

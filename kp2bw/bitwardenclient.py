@@ -1,6 +1,7 @@
 import json
 import os
 import logging
+import platform
 
 from itertools import groupby
 
@@ -30,7 +31,7 @@ class BitwardenClient():
         except CalledProcessError as e:
             output = e.output
         
-        logging.debug(f"  -- Output: {output}")
+        logging.debug(f"  |- Output: {output}")
         return str(output.decode("utf-8"))
 
     def _get_existing_folder_entries(self):
@@ -47,17 +48,23 @@ class BitwardenClient():
             for folder_id, entries in groupby(items, key=lambda item: item["folderId"])}
 
     def _exec_with_session(self, command):
-        return self._exec(f"{command} --session {self._key}")
+        return self._exec(f"{command} --session '{self._key}'")
 
     def has_folder(self, folder):
         return folder in self._folders
+
+    def _get_platform_dependend_echo_str(self, string):
+        if platform.system() == "Windows":
+            return f'echo {string}'
+        else:
+            return f'echo \'{string}\''
 
     def create_folder(self, folder):
         if not folder or self.has_folder(folder):
             return
 
         data = {"name": folder }
-        output = self._exec_with_session(f'echo \'{json.dumps(data)}\' | bw encode | bw create folder')
+        output = self._exec_with_session(f'{self._get_platform_dependend_echo_str(json.dumps(data))} | bw encode | bw create folder')
 
         output_obj = json.loads(output)
 
@@ -79,9 +86,9 @@ class BitwardenClient():
         json_str = json.dumps(entry)
 
         # string escaping due to echo "string"
-        json_str = json_str.replace('"', r'\"')
+        json_str = json_str.replace("'", r"\'")
 
-        output = self._exec_with_session(f'echo "{json_str}" | bw encode | bw create item')
+        output = self._exec_with_session(f'{self._get_platform_dependend_echo_str(json_str)} | bw encode | bw create item')
 
         return output
     
