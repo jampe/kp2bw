@@ -37,7 +37,7 @@ class Converter():
             "name": title,
             "notes":notes,
             "favorite":False,
-            "fields":[{"name": key,"value": value,"type":0} for key, value in custom_properties.items() if len(value) <= MAX_BW_ITEM_LENGTH],
+            "fields":[{"name": key,"value": value,"type":0} for key, value in custom_properties.items() if value is not None and len(value) <= MAX_BW_ITEM_LENGTH],
             "login": {
                 "uris":[
                     {"match": None,"uri": url}
@@ -78,7 +78,7 @@ class Converter():
         folder = self._generate_folder_name(entry)
 
         # get attachments to store later on
-        attachments = [(key, value) for key,value in entry.custom_properties.items() if len(value) > MAX_BW_ITEM_LENGTH]
+        attachments = [(key, value) for key,value in entry.custom_properties.items() if value is not None and len(value) > MAX_BW_ITEM_LENGTH]
         
         if entry.notes and len(entry.notes) > MAX_BW_ITEM_LENGTH:
             attachments.append(("notes", entry.notes))
