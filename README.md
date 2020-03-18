@@ -15,6 +15,7 @@ This tool helps to convert existing KeePass databases to Bitwarden accounts. Thi
     * root-only: The highest folder in the nesting hierarchy will be used to store all entries of the tree: All entries in foo and foo/bar will be stored in a folder foo in Bitwarden.
     * combine: The nested folders will be preserved as own folders and named like this: foo/bar in KeePass results in a foo-bar folder in Bitwarden
 * Importing of the entries one by one, it is slower but it will prevent bitwarden db query max time exceeded errors for bigger KeePass databases
+* Full UTF-8 support
 * Windows, macOS, & Linux supported.
 
 ## Installation

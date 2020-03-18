@@ -2,6 +2,8 @@ import json
 import os
 import logging
 import platform
+import shlex
+import base64
 
 from itertools import groupby
 
@@ -68,7 +70,9 @@ class BitwardenClient():
             return
 
         data = {"name": folder }
-        output = self._exec_with_session(f'{self._get_platform_dependend_echo_str(json.dumps(data))} | bw encode | bw create folder')
+        data_b64 = base64.b64encode(json.dumps(data).encode("UTF-8")).decode("UTF-8")
+
+        output = self._exec_with_session(f'{self._get_platform_dependend_echo_str(data_b64)} | bw create folder')
 
         output_obj = json.loads(output)
 
@@ -89,10 +93,10 @@ class BitwardenClient():
 
         json_str = json.dumps(entry)
 
-        # string escaping due to echo "string"
-        json_str = json_str.replace("'", r"\'")
+        # convert string to base64
+        json_b64 = base64.b64encode(json_str.encode("UTF-8")).decode("UTF-8")
 
-        output = self._exec_with_session(f'{self._get_platform_dependend_echo_str(json_str)} | bw encode | bw create item')
+        output = self._exec_with_session(f'{self._get_platform_dependend_echo_str(json_b64)} | bw create item')
 
         return output
     
