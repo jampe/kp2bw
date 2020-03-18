@@ -2,7 +2,6 @@ import json
 import os
 import logging
 import platform
-import shlex
 import base64
 
 from itertools import groupby
