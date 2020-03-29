@@ -9,12 +9,8 @@ from bitwardenclient import BitwardenClient
 KP_REF_IDENTIFIER = "{REF:"
 MAX_BW_ITEM_LENGTH = 10 * 1000
 
-class FolderGenerationMode(Enum):
-    ROOT_ONLY = 1
-    COMBINE = 2
-
 class Converter():
-    def __init__(self, keepass_file_path, keepass_password, bitwarden_password, folder_generation_mode = FolderGenerationMode.ROOT_ONLY):
+    def __init__(self, keepass_file_path, keepass_password, bitwarden_password):
         self._keepass_file_path = keepass_file_path
         self._keepass_password = keepass_password
         self._bitwarden_password = bitwarden_password
@@ -55,15 +51,8 @@ class Converter():
     def _generate_folder_name(self, entry):
         if not entry.group.path or entry.group.path == "/":
             return None
-        
-        path = entry.group.path[:-1]
-
-        if self._folder_generation_mode == FolderGenerationMode.ROOT_ONLY:
-            return str(path).split("/")[0]
-        elif self._folder_generation_mode == FolderGenerationMode.COMBINE:
-            return path.replace("/", "-")
         else:
-            raise Exception("Invalid FolderGenerationMode set")
+            return entry.group.path[:-1]
 
     def _add_bw_entry_to_entires_dict(self, entry):
         bw_item_object = self._create_bw_python_object(
@@ -79,7 +68,7 @@ class Converter():
 
         # get attachments to store later on
         attachments = [(key, value) for key,value in entry.custom_properties.items() if value is not None and len(value) > MAX_BW_ITEM_LENGTH]
-        
+
         if entry.notes and len(entry.notes) > MAX_BW_ITEM_LENGTH:
             attachments.append(("notes", entry.notes))
 
@@ -96,7 +85,7 @@ class Converter():
 
         if len(tokens) != 3:
             raise Exception("Invalid REF string found")
-        
+
         ref_compare_string = tokens[2][:-1]
         field_referenced, lookup_mode = tokens[1].split("@")
 
@@ -117,13 +106,13 @@ class Converter():
         for member, reference_key in self._member_reference_resolving_dict.items():
             if field_referenced == reference_key:
                 return ref_entry["login"][member]
-                
+
         raise Exception("Unsuppoorted REF field_referenced")
 
     def _load_keepass_data(self):
         # aggregate entries
         kp = PyKeePass(self._keepass_file_path, password=self._keepass_password)
-        
+
         # reset data structures
         self._kp_ref_entries = []
         self._entries = {}
@@ -132,7 +121,7 @@ class Converter():
         for entry in kp.entries:
             if not entry.password and not entry.username and not entry.notes:
                 continue
-            
+
             # prevent not iteratable errors at "in" checks
             username = entry.username if entry.username else ''
             password = entry.password if entry.password else ''
@@ -141,7 +130,7 @@ class Converter():
             if KP_REF_IDENTIFIER in username or KP_REF_IDENTIFIER in password:
                 self._kp_ref_entries.append(entry)
                 continue
-            
+
             # Normal entry
             self._add_bw_entry_to_entires_dict(entry)
 
@@ -167,7 +156,7 @@ class Converter():
                         setattr(kp_entry, member, value)
 
                         replaced_entries.append(ref_entry)
-                        
+
                 # handle storing bitwarden style
                 username_and_password_match = True
                 for ref_entry in replaced_entries:
@@ -181,10 +170,10 @@ class Converter():
                 else:
                     # => create new bitwarden item
                     self._add_bw_entry_to_entires_dict(kp_entry)
-                
+
             except Exception as e:
                 logging.warning(f"!! Could not resolve entry for {kp_entry.group.path}{kp_entry.title} [{str(kp_entry.uuid)}] !!")
-        
+
         logging.debug(f"Resolved {ref_entries_length} REF entries")
 
     def _create_bitwarden_items_for_entries(self):
@@ -198,9 +187,9 @@ class Converter():
                 attachments = None
             else:
                 (folder, bw_item_object, attachments) = value
-            
+
             logging.info(f"[{i} of {max_i}] Creating Bitwarden entry in {folder} for {bw_item_object['name']}...")
-            
+
             # create entry
             output = bw.create_entry(folder, bw_item_object)
             if "error" in output.lower():
@@ -208,7 +197,7 @@ class Converter():
                 continue
             if "skip" in output:
                 continue
-            
+
             # upload attachments
             if attachments:
                 item_id = json.loads(output)["id"]
@@ -231,4 +220,4 @@ class Converter():
 
         # store aggregated entries in bw
         self._create_bitwarden_items_for_entries()
-            
+
