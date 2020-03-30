@@ -10,13 +10,10 @@ This tool helps to convert existing KeePass databases to Bitwarden accounts. Thi
 * **Importing attachments** from KeePass
 * **Importing notes longer than 10,000 chars**. Notes can't be longer than this. The notes will be imported as an attachment named notes.txt.
 * **Idempotent import**: Entries won't be duplicated when running the import multiple times.
-* **Auto generate folders** in Bitwarden based on your KeePass folder structure
-  * If you have nested folder in KeePass, you can choose between two handling mechanisms for the folder creation as Bitwarden does not support nested folders:
-    * root-only: The highest folder in the nesting hierarchy will be used to store all entries of the tree: All entries in foo and foo/bar will be stored in a folder foo in Bitwarden.
-    * combine: The nested folders will be preserved as own folders and named like this: foo/bar in KeePass results in a foo-bar folder in Bitwarden
+* **Nested folders supported**: If you have nested folder in KeePass, kp2bw will recreate the same folder structure in Bitwarden for you.
 * Importing of the entries one by one, it is slower but it will prevent bitwarden db query max time exceeded errors for bigger KeePass databases
-* Full UTF-8 support
-* Windows, macOS, & Linux supported.
+* **Full UTF-8 support**
+* **Multi OS support**: Works on Windows, macOS, & Linux.
 
 ## Installation
 Clone this repository and enter the directory. Install the tool dependencies using:
