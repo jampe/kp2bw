@@ -56,8 +56,4 @@ optional arguments:
   -bwpw BWPW            Bitwarden Password
   -y                    Skips the confirm bw installation question
   -v                    Verbose output
-  -folder-generation-mode FOLDER_GENERATION_MODE
-                        Set the folder generation mode. Options: root-only => nested or not, only the root folder of the folder
-                        tree is created, combine => nested folders will be created with a combined name. E.g. foo/bar in KeePass
-                        results in a foo-bar folder in Bitwarden.
 ```
