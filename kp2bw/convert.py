@@ -15,8 +15,6 @@ class Converter():
         self._keepass_password = keepass_password
         self._bitwarden_password = bitwarden_password
 
-        self._folder_generation_mode = folder_generation_mode
-
         self._kp_ref_entries = []
         self._entries = {}
 
