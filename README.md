@@ -51,9 +51,11 @@ required arguments:
   -kpfile KPFILE        Path to your KeePass 2.x db.
 
 optional arguments:
-  -h, --help            show this help message and exit
-  -kppw KPPW            KeePass db password
-  -bwpw BWPW            Bitwarden Password
-  -y                    Skips the confirm bw installation question
-  -v                    Verbose output
+  -h, --help        show this help message and exit
+  -kpfile KP_FILE   Path to your KeePass 2.x db.
+  -kppw KP_PW       KeePass db password
+  -kpkf KP_KEYFILE  KeePass db key file
+  -bwpw BW_PW       Bitwarden Password
+  -y                Skips the confirm bw installation question
+  -v                Verbose output
 ```

@@ -1,9 +1,10 @@
 import argparse
-import sys
 import getpass
 import logging
+import sys
 
 from convert import Converter
+
 
 class MyArgParser(argparse.ArgumentParser):
     def error(self, message):
@@ -11,26 +12,41 @@ class MyArgParser(argparse.ArgumentParser):
         self.print_help()
         sys.exit(2)
 
+
+def _argparser():
+    parser = MyArgParser()
+
+    parser.add_argument('-kpfile', dest='kp_file', help='Path to your KeePass 2.x db.', required=True)
+    parser.add_argument('-kppw', dest='kp_pw', help='KeePass db password', default=None)
+    parser.add_argument('-kpkf', dest='kp_keyfile', help='KeePass db key file', default=None)
+    parser.add_argument('-bwpw', dest='bw_pw', help='Bitwarden Password', default=None)
+    parser.add_argument('-y', dest='skip_confirm', help='Skips the confirm bw installation question',
+                        action="store_const", const=True, default=False)
+    parser.add_argument('-v', dest='verbose', help='Verbose output', action="store_const", const=True, default=False)
+
+    return parser
+
+
+def _read_password(arg, prompt):
+    if not arg:
+        arg = getpass.getpass(prompt=prompt)
+
+    return arg
+
+
 if __name__ == "__main__":
     print("⁻" * 58)
     print("--[kp2bw - KeePass 2.x to Bitwarden converter by @jampe]--")
     print("-" * 58)
     print(" ")
 
-    parser = MyArgParser()
-    parser.add_argument('-kpfile', dest='kpfile', help='Path to your KeePass 2.x db.', required=True)
-    parser.add_argument('-kppw', dest='kppw', help='KeePass db password', default=None)
-    parser.add_argument('-bwpw', dest='bwpw', help='Bitwarden Password', default=None)
-    parser.add_argument('-y', dest='skip_confirm', help='Skips the confirm bw installation question', action="store_const", const=True, default=False)
-    parser.add_argument('-v', dest='verbose', help='Verbose output', action="store_const", const=True, default=False)
-
-    args = parser.parse_args()
+    args = _argparser().parse_args()
 
     # logging
     if args.verbose:
         logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.DEBUG)
     else:
-        logging.basicConfig(format='%(levelname)s: %(message)s',level=logging.INFO)
+        logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)
 
     # bw confirmation
     if not args.skip_confirm:
@@ -40,7 +56,7 @@ if __name__ == "__main__":
         print("2) execute bw login once, as this script uses bw unlock only: bw login <user>")
         print(" ")
 
-        while(confirm != "y" and confirm != "n"):
+        while confirm != "y" and confirm != "n":
             confirm = input("Confirm that you have set up bw cli [y/n]: ").lower()
 
         if confirm == "n":
@@ -48,16 +64,15 @@ if __name__ == "__main__":
             sys.exit(2)
 
     # stdin password
-    kppw = args.kppw
-    if not kppw:
-        kppw = getpass.getpass(prompt="Please enter your KeePass 2.x db password: ")
-
-    bwpw = args.bwpw
-    if not bwpw:
-        bwpw = getpass.getpass(prompt="Please enter your Bitwarden password: ")
+    kp_pw = _read_password(args.kp_pw, "Please enter your KeePass 2.x db password: ")
+    bw_pw = _read_password(args.bw_pw, "Please enter your Bitwarden password: ")
 
     # call converter
-    c = Converter(args.kpfile, kppw, bwpw)
+    c = Converter(
+        keepass_file_path=args.kp_file,
+        keepass_password=kp_pw,
+        keepass_keyfile_path=args.kp_keyfile,
+        bitwarden_password=bw_pw)
     c.convert()
 
     print(" ")
