@@ -10,9 +10,10 @@ KP_REF_IDENTIFIER = "{REF:"
 MAX_BW_ITEM_LENGTH = 10 * 1000
 
 class Converter():
-    def __init__(self, keepass_file_path, keepass_password, bitwarden_password):
+    def __init__(self, keepass_file_path, keepass_password, keepass_keyfile_path, bitwarden_password):
         self._keepass_file_path = keepass_file_path
         self._keepass_password = keepass_password
+        self._keepass_keyfile_path = keepass_keyfile_path
         self._bitwarden_password = bitwarden_password
 
         self._kp_ref_entries = []
@@ -109,7 +110,10 @@ class Converter():
 
     def _load_keepass_data(self):
         # aggregate entries
-        kp = PyKeePass(self._keepass_file_path, password=self._keepass_password)
+        kp = PyKeePass(
+            filename=self._keepass_file_path,
+            password=self._keepass_password,
+            keyfile=self._keepass_keyfile_path)
 
         # reset data structures
         self._kp_ref_entries = []
