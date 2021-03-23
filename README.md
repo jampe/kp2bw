@@ -1,6 +1,6 @@
 # KP2BW - KeePass 2.x to Bitwarden Converter
 
-This tool helps to convert existing KeePass databases to Bitwarden accounts. This tool brings the following advantages over the bitwarden importer:
+This tool helps to convert existing KeePass databases to Bitwarden accounts. It provides the following advantages compared to the importer by the bitwarden project:
 
 * **Import the all the data without having it ever touching the disk in unencrypted form** . Note: as attachments must be stored on disk prior to upload, those files will be on the disk during the upload phase. The files are removed from disk after uploading.
 * **Resolve KeePass reference entries**(username and password only) in a "Bitwarden" way. For each entry with a reference field, the following happens:
