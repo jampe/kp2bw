@@ -51,7 +51,7 @@ class Converter():
         if not entry.group.path or entry.group.path == "/":
             return None
         else:
-            return entry.group.path[:-1]
+            return "/".join(entry.group.path)
 
     def _add_bw_entry_to_entires_dict(self, entry):
         bw_item_object = self._create_bw_python_object(
@@ -121,8 +121,9 @@ class Converter():
 
         logging.info(f"Found {len(kp.entries)} entries in KeePass DB. Parsing now...")
         for entry in kp.entries:
-            if not entry.password and not entry.username and not entry.notes:
-                continue
+            # if not entry.password and not entry.username and not entry.notes:
+            #     logging.warn(f"Ignoring entry {entry.title} since it has neither (1) a password, (2) a username, or (3) notes")
+            #     continue
 
             # prevent not iteratable errors at "in" checks
             username = entry.username if entry.username else ''
@@ -136,7 +137,7 @@ class Converter():
             # Normal entry
             self._add_bw_entry_to_entires_dict(entry)
 
-        logging.debug(f"Parsed {len(self._entries)} entries")
+        logging.info(f"Parsed {len(self._entries)} entries")
 
     def _resolve_entries_with_references(self):
         ref_entries_length = len(self._kp_ref_entries)
