@@ -37,7 +37,7 @@ class BitwardenClient():
             output = e.output
         
         logging.debug(f"  |- Output: {output}")
-        return str(output.decode("utf-8"))
+        return str(output.decode("utf-8","ignore"))
 
     def _get_existing_folder_entries(self):
         folder_id_lookup_helper = {folder_id: folder_name for folder_name,folder_id in self._folders.items()}
