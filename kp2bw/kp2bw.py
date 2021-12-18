@@ -3,7 +3,7 @@ import getpass
 import logging
 import sys
 
-from convert import Converter
+from .convert import Converter
 
 
 class MyArgParser(argparse.ArgumentParser):
@@ -33,8 +33,7 @@ def _read_password(arg, prompt):
 
     return arg
 
-
-if __name__ == "__main__":
+def main():
     print("⁻" * 58)
     print("--[kp2bw - KeePass 2.x to Bitwarden converter by @jampe]--")
     print("-" * 58)
@@ -77,3 +76,6 @@ if __name__ == "__main__":
 
     print(" ")
     print("All done.")
+
+if __name__ == "__main__":
+    main()

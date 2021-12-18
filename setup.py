@@ -1,10 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-try:
-    from setuptools import setup
-except ImportError:
-    from distutils.core import setup
+from setuptools import setup,find_packages
 
 with open('README.md') as readme_file:
     readme = readme_file.read()
@@ -20,10 +17,12 @@ setup(
     author="Daniel Jampen",
     author_email='daniel@jampen.net',
     url='https://github.zhaw.ch/jampe/kp2bw',
-    packages=[
-        'kp2bw',
-    ],
-    package_dir={'kp2bw': '.'},
+    packages=find_packages(),
+    entry_points={
+        'console_scripts': [
+            'kp2bw = kp2bw.kp2bw:main',
+        ]
+    },
     include_package_data=True,
     install_requires=requirements,
     zip_safe=False,
