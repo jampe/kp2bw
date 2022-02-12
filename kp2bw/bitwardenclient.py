@@ -1,6 +1,7 @@
 import json
 import os
 import logging
+import shlex
 import platform
 import base64
 
@@ -78,6 +79,10 @@ class BitwardenClient():
         self._folders[output_obj["name"]] = output_obj["id"]
 
     def create_entry(self, folder, entry):
+
+        if not entry["name"]:
+            entry["name"] = "_untitled"
+
         # check if already exists
         if folder in self._folder_entries and entry["name"] in self._folder_entries[folder]:
             logging.info(f"-- Entry {entry['name']} already exists in folder {folder}. skipping...")
@@ -98,6 +103,8 @@ class BitwardenClient():
         output = self._exec_with_session(f'{self._get_platform_dependend_echo_str(json_b64)} | bw create item')
 
         return output
+
+    
     
     def create_attachement(self, item_id, attachment):
         # store attachement on disk
@@ -117,7 +124,7 @@ class BitwardenClient():
             f.write(data)
         
         try:
-            output = self._exec_with_session(f'bw create attachment --file ./{filename} --itemid {item_id}')
+            output = self._exec_with_session('bw create attachment --file "{}" --itemid {}'.format(filename, item_id))
         finally:
             os.remove(filename)
         
