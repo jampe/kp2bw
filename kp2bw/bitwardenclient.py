@@ -1,7 +1,6 @@
 import json
 import os
 import logging
-import shlex
 import platform
 import base64
 
@@ -104,8 +103,6 @@ class BitwardenClient():
 
         return output
 
-    
-    
     def create_attachement(self, item_id, attachment):
         # store attachement on disk
         filename = ""
