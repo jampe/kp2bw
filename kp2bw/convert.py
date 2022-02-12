@@ -55,11 +55,11 @@ class Converter():
 
     def _add_bw_entry_to_entires_dict(self, entry):
         bw_item_object = self._create_bw_python_object(
-            title = entry.title if entry.title else '',
+            title = entry.title if entry.title else '_untitled',
             notes =  entry.notes if entry.notes and len(entry.notes) <= MAX_BW_ITEM_LENGTH else '',
             url = entry.url if entry.url else '',
-            username = entry.username if entry.title else '',
-            password = entry.password if entry.title else '',
+            username = entry.username if entry.username else '',
+            password = entry.password if entry.password else '',
             custom_properties = entry.custom_properties
         )
 

@@ -78,10 +78,6 @@ class BitwardenClient():
         self._folders[output_obj["name"]] = output_obj["id"]
 
     def create_entry(self, folder, entry):
-
-        if not entry["name"]:
-            entry["name"] = "_untitled"
-
         # check if already exists
         if folder in self._folder_entries and entry["name"] in self._folder_entries[folder]:
             logging.info(f"-- Entry {entry['name']} already exists in folder {folder}. skipping...")
