@@ -1,14 +1,16 @@
-import json
-import os
-import logging
-import platform
 import base64
-
+import json
+import logging
+import os
+import platform
+import shutil
 from itertools import groupby
+from subprocess import STDOUT, CalledProcessError, check_output
 
-from subprocess import check_output, STDOUT, CalledProcessError
 
 class BitwardenClient():
+    TEMPORARY_ATTACHMENT_FOLDER = "attachment-temp"
+
     def __init__(self, password):
         # check for bw cli installation
         if not "bitwarden" in self._exec("bw"):
@@ -28,7 +30,19 @@ class BitwardenClient():
 
         # get existing entries
         self._folder_entries = self._get_existing_folder_entries()
- 
+    
+    def __del__(self):
+        # cleanup temp directory
+        self._remove_temporary_attachment_folder()
+
+    def _create_temporary_attachment_folder(self):
+        if not os.path.isdir(self.TEMPORARY_ATTACHMENT_FOLDER):
+            os.os.mkdir(self.TEMPORARY_ATTACHMENT_FOLDER)
+
+    def _remove_temporary_attachment_folder(self):
+        if os.path.isdir(self.TEMPORARY_ATTACHMENT_FOLDER):
+            shutil.rmtree(self.TEMPORARY_ATTACHMENT_FOLDER)
+
     def _exec(self, command):
         try:
             logging.debug(f"-- Executing command: {command}")
@@ -113,12 +127,16 @@ class BitwardenClient():
             filename = attachment.filename
             data = attachment.data
 
-        with open(filename, "wb") as f:
+        # make sure temporary attachment folder exists
+        self._create_temporary_attachment_folder()
+
+        path_to_file_on_disk = os.path.join(self.TEMPORARY_ATTACHMENT_FOLDER, filename)
+        with open(path_to_file_on_disk, "wb") as f:
             f.write(data)
         
         try:
-            output = self._exec_with_session('bw create attachment --file "{}" --itemid {}'.format(filename, item_id))
+            output = self._exec_with_session(f'bw create attachment --file "{path_to_file_on_disk}" --itemid {item_id}')
         finally:
-            os.remove(filename)
+            os.remove(path_to_file_on_disk)
         
         return output
