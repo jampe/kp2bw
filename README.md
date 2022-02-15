@@ -61,3 +61,15 @@ optional arguments:
   -y                Skips the confirm bw installation question
   -v                Verbose output
 ```
+
+## Troubleshooting
+### Invalid master password error on bw unlock
+
+```
+DEBUG: -- Executing command: bw unlock My?Master>>Password123 --raw
+DEBUG:   |- Output: b'Invalid master password.'
+DEBUG: -- Executing command: bw sync --session 'Invalid master password.'
+```
+
+The solution is to encapsulate the master password in double quotes (when you're typing it in at the password prompt), then the bw unlock command will run successfully and sync will continue. Thanks @readysteadywhoa for reporting this and providing a solution!
+
