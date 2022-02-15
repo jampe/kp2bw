@@ -16,14 +16,16 @@ This tool helps to convert existing KeePass databases to Bitwarden accounts. It 
 * **Multi OS support**: Works on Windows, macOS, & Linux.
 
 ## Installation
-Clone this repository and enter the directory. Install the tool dependencies using:
-```
-pip install -r requirements.txt
+1) Make sure you've installed python 3 on your system.
 
-or
+1) Clone this repository and enter the directory. Install the tool dependencies using:
+  ```
+  pip install -r requirements.txt
 
-pipenv install -r requirements.txt
-```
+  or
+
+  pipenv install -r requirements.txt
+  ```
 
 ## Usage
 First, make sure you install the Bitwarden CLI tool on your system (https://help.bitwarden.com/article/cli/). After installing, set up the client:

@@ -16,6 +16,7 @@ setup(
     name='kp2bw',
     version='1.0',
     description="Imports and existing KeePass db with REF fields into Bitwarden",
+    python_requires=">=3.0",
     long_description=readme,
     author="Daniel Jampen",
     author_email='daniel@jampen.net',
