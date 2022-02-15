@@ -98,7 +98,7 @@ class BitwardenClient():
         output = self._exec_with_session(f'{self._get_platform_dependend_echo_str(json_b64)} | bw create item')
 
         return output
-    
+
     def create_attachement(self, item_id, attachment):
         # store attachement on disk
         filename = ""
@@ -117,7 +117,7 @@ class BitwardenClient():
             f.write(data)
         
         try:
-            output = self._exec_with_session(f'bw create attachment --file ./{filename} --itemid {item_id}')
+            output = self._exec_with_session('bw create attachment --file "{}" --itemid {}'.format(filename, item_id))
         finally:
             os.remove(filename)
         
