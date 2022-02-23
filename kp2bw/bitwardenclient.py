@@ -37,7 +37,7 @@ class BitwardenClient():
 
     def _create_temporary_attachment_folder(self):
         if not os.path.isdir(self.TEMPORARY_ATTACHMENT_FOLDER):
-            os.os.mkdir(self.TEMPORARY_ATTACHMENT_FOLDER)
+            os.mkdir(self.TEMPORARY_ATTACHMENT_FOLDER)
 
     def _remove_temporary_attachment_folder(self):
         if os.path.isdir(self.TEMPORARY_ATTACHMENT_FOLDER):
