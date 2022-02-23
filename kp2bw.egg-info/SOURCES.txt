@@ -1,0 +1,14 @@
+README.md
+pyproject.toml
+setup.cfg
+setup.py
+kp2bw/__init__.py
+kp2bw/bitwardenclient.py
+kp2bw/cli.py
+kp2bw/convert.py
+kp2bw.egg-info/PKG-INFO
+kp2bw.egg-info/SOURCES.txt
+kp2bw.egg-info/dependency_links.txt
+kp2bw.egg-info/entry_points.txt
+kp2bw.egg-info/requires.txt
+kp2bw.egg-info/top_level.txt

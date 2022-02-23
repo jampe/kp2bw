@@ -1,22 +1,21 @@
-import argparse
+
 import getpass
 import logging
 import sys
+from argparse import ArgumentParser
+from .convert import Converter
 
-from convert import Converter
-
-
-class MyArgParser(argparse.ArgumentParser):
+class MyArgParser(ArgumentParser):
     def error(self, message):
-        sys.stderr.write('Error: %s\n\n' % message)
+        sys.stderr.write(f'{self.prog}: {message}\n\n')
         self.print_help()
         sys.exit(2)
 
 
 def _argparser():
-    parser = MyArgParser()
+    parser = MyArgParser(description="KeePass 2.x to Bitwarden converter by @jampe")
 
-    parser.add_argument('-kpfile', dest='kp_file', help='Path to your KeePass 2.x db.', required=True)
+    parser.add_argument('keepass_file', help='Path to your KeePass 2.x db.')
     parser.add_argument('-kppw', dest='kp_pw', help='KeePass db password', default=None)
     parser.add_argument('-kpkf', dest='kp_keyfile', help='KeePass db key file', default=None)
     parser.add_argument('-bwpw', dest='bw_pw', help='Bitwarden Password', default=None)
@@ -33,13 +32,7 @@ def _read_password(arg, prompt):
 
     return arg
 
-
-if __name__ == "__main__":
-    print("⁻" * 58)
-    print("--[kp2bw - KeePass 2.x to Bitwarden converter by @jampe]--")
-    print("-" * 58)
-    print(" ")
-
+def main():
     args = _argparser().parse_args()
 
     # logging
@@ -69,7 +62,7 @@ if __name__ == "__main__":
 
     # call converter
     c = Converter(
-        keepass_file_path=args.kp_file,
+        keepass_file_path=args.keepass_file,
         keepass_password=kp_pw,
         keepass_keyfile_path=args.kp_keyfile,
         bitwarden_password=bw_pw)

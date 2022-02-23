@@ -4,7 +4,7 @@ import logging
 from enum import Enum
 from pykeepass import PyKeePass
 
-from bitwardenclient import BitwardenClient
+from .bitwardenclient import BitwardenClient
 
 KP_REF_IDENTIFIER = "{REF:"
 MAX_BW_ITEM_LENGTH = 10 * 1000

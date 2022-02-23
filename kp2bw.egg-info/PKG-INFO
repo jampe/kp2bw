@@ -1,3 +1,13 @@
+Metadata-Version: 2.1
+Name: kp2bw
+Version: 1.1
+Summary: Imports and existing KeePass db with REF fields into Bitwarden,
+Home-page: https://github.zhaw.ch/jampe/kp2bw
+Author: Daniel Jampen
+Author-email: daniel@jampen.net
+License: UNKNOWN
+Platform: UNKNOWN
+
 # KP2BW - KeePass 2.x to Bitwarden Converter
 
 This tool helps to convert existing KeePass databases to Bitwarden accounts. It provides the following advantages compared to the importer by the bitwarden project:
@@ -16,19 +26,16 @@ This tool helps to convert existing KeePass databases to Bitwarden accounts. It 
 * **Multi OS support**: Works on Windows, macOS, & Linux.
 
 ## Installation
-1) choose either one of the installation methods below
+1) Make sure you've installed python 3 on your system.
+1) Clone this repository and enter the directory.
 
 ### Install using the pre built whl file
-1) Make sure you've installed python 3 and pip on your system.
-1) Download the newest whl release from the releases
-1) Install kp2bw via pip:
+1) execute the following command in a terminal:
   ```
-  pip install kp2bw-1.1-py3-none-any.whl
+  pip install dist/kp2bw-1.1-py3-none-any.whl
   ```
 
 ### Install from source
-1) Make sure you've installed python 3 and pip on your system.
-1) Clone / download this repository and enter the directory.
 1) Create a new python venv and activate it
   ```
   python -m venv .env/kp2bw
@@ -87,4 +94,6 @@ DEBUG: -- Executing command: bw sync --session 'Invalid master password.'
 ```
 
 The solution is to encapsulate the master password in double quotes (when you're typing it in at the password prompt), then the bw unlock command will run successfully and sync will continue. Thanks @readysteadywhoa for reporting this and providing a solution!
+
+
 
