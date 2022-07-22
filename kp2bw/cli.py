@@ -18,7 +18,7 @@ def _argparser():
     parser.add_argument('keepass_file', help='Path to your KeePass 2.x db.')
     parser.add_argument('-kppw', dest='kp_pw', help='KeePass db password', default=None)
     parser.add_argument('-kpkf', dest='kp_keyfile', help='KeePass db key file', default=None)
-    parser.add_argument('-bwpw', dest='bw_pw', help='Bitwarden Password', default=None)
+    parser.add_argument('-bwpw', dest='bw_pw', help='Bitwarden password', default=None)
     parser.add_argument('-y', dest='skip_confirm', help='Skips the confirm bw installation question',
                         action="store_const", const=True, default=False)
     parser.add_argument('-v', dest='verbose', help='Verbose output', action="store_const", const=True, default=False)

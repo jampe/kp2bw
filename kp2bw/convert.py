@@ -107,7 +107,7 @@ class Converter():
             if field_referenced == reference_key:
                 return ref_entry["login"][member]
 
-        raise Exception("Unsuppoorted REF field_referenced")
+        raise Exception("Unsupported REF field_referenced")
 
     def _load_keepass_data(self):
         # aggregate entries
@@ -126,7 +126,7 @@ class Converter():
             #     logging.warn(f"Ignoring entry {entry.title} since it has neither (1) a password, (2) a username, or (3) notes")
             #     continue
 
-            # prevent not iteratable errors at "in" checks
+            # prevent not iterable errors at "in" checks
             username = entry.username if entry.username else ''
             password = entry.password if entry.password else ''
 
@@ -208,7 +208,7 @@ class Converter():
 
                 for attachment in attachments:
                     logging.info(f"        - Uploading attachment for item {bw_item_object['name']}...")
-                    res = bw.create_attachement(item_id, attachment)
+                    res = bw.create_attachment(item_id, attachment)
                     if "failed" in res:
                         logging.error(f"!! ERROR: Uploading attachment failed: {res}")
 

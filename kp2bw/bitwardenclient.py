@@ -19,11 +19,11 @@ class BitwardenClient():
         # login
         self._key = self._exec(f"bw unlock {password} --raw")
         if "error" in self._key:
-            raise Exception("Could not unlock the bitwarden db. Is the Master Password corrent and are bw cli tools set up correctly?")
+            raise Exception("Could not unlock the Bitwarden db. Is the Master Password correct and are bw cli tools set up correctly?")
 
         # make sure data is up to date
         if not "Syncing complete." in self._exec_with_session("bw sync"):
-            raise Exception("Could not sync the local state to your bitwarden server")
+            raise Exception("Could not sync the local state to your Bitwarden server")
 
         # get folder list
         self._folders = {folder["name"]: folder["id"] for folder in json.loads(self._exec_with_session("bw list folders"))}
@@ -72,7 +72,7 @@ class BitwardenClient():
     def has_folder(self, folder):
         return folder in self._folders
 
-    def _get_platform_dependend_echo_str(self, string):
+    def _get_platform_dependent_echo_str(self, string):
         if platform.system() == "Windows":
             return f'echo {string}'
         else:
@@ -85,7 +85,7 @@ class BitwardenClient():
         data = {"name": folder }
         data_b64 = base64.b64encode(json.dumps(data).encode("UTF-8")).decode("UTF-8")
 
-        output = self._exec_with_session(f'{self._get_platform_dependend_echo_str(data_b64)} | bw create folder')
+        output = self._exec_with_session(f'{self._get_platform_dependent_echo_str(data_b64)} | bw create folder')
 
         output_obj = json.loads(output)
 
@@ -109,12 +109,12 @@ class BitwardenClient():
         # convert string to base64
         json_b64 = base64.b64encode(json_str.encode("UTF-8")).decode("UTF-8")
 
-        output = self._exec_with_session(f'{self._get_platform_dependend_echo_str(json_b64)} | bw create item')
+        output = self._exec_with_session(f'{self._get_platform_dependent_echo_str(json_b64)} | bw create item')
 
         return output
 
-    def create_attachement(self, item_id, attachment):
-        # store attachement on disk
+    def create_attachment(self, item_id, attachment):
+        # store attachment on disk
         filename = ""
         data = None
         if isinstance(attachment, tuple):
