@@ -24,7 +24,7 @@ class Converter():
             "password": "P"
         }
 
-    def _create_bw_python_object(self, title, notes, url, username, password, custom_properties):
+    def _create_bw_python_object(self, title, notes, url, totp, username, password, custom_properties):
         return {
             "organizationId": None,
             "folderId": None,
@@ -39,7 +39,7 @@ class Converter():
                 ] if url else [],
                 "username": username,
                 "password":password,
-                "totp": None,
+                "totp": totp,
                 "passwordRevisionDate": None
             },
             "secureNote": None,
@@ -58,6 +58,7 @@ class Converter():
             title = entry.title if entry.title else '_untitled',
             notes =  entry.notes if entry.notes and len(entry.notes) <= MAX_BW_ITEM_LENGTH else '',
             url = entry.url if entry.url else '',
+            totp = entry.otp if entry.otp else '',
             username = entry.username if entry.username else '',
             password = entry.password if entry.password else '',
             custom_properties = entry.custom_properties
@@ -106,7 +107,7 @@ class Converter():
             if field_referenced == reference_key:
                 return ref_entry["login"][member]
 
-        raise Exception("Unsuppoorted REF field_referenced")
+        raise Exception("Unsupported REF field_referenced")
 
     def _load_keepass_data(self):
         # aggregate entries
@@ -125,7 +126,7 @@ class Converter():
             #     logging.warn(f"Ignoring entry {entry.title} since it has neither (1) a password, (2) a username, or (3) notes")
             #     continue
 
-            # prevent not iteratable errors at "in" checks
+            # prevent not iterable errors at "in" checks
             username = entry.username if entry.username else ''
             password = entry.password if entry.password else ''
 
@@ -207,7 +208,7 @@ class Converter():
 
                 for attachment in attachments:
                     logging.info(f"        - Uploading attachment for item {bw_item_object['name']}...")
-                    res = bw.create_attachement(item_id, attachment)
+                    res = bw.create_attachment(item_id, attachment)
                     if "failed" in res:
                         logging.error(f"!! ERROR: Uploading attachment failed: {res}")
 
