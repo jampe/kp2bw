@@ -25,6 +25,7 @@ class Converter():
         }
 
     def _create_bw_python_object(self, title, notes, url, totp, username, password, custom_properties):
+        print('BW Object Custom Prop: ', custom_properties)
         return {
             "organizationId": None,
             "folderId": None,
@@ -32,7 +33,7 @@ class Converter():
             "name": title,
             "notes":notes,
             "favorite":False,
-            "fields":[{"name": key,"value": value,"type":0} for key, value in custom_properties.items() if value is not None and len(value) <= MAX_BW_ITEM_LENGTH],
+            "fields":[{"name": key,"value": value[0],"type": value[1]} for key, value in custom_properties.items() if value[0] is not None and len(value[0]) <= MAX_BW_ITEM_LENGTH],
             "login": {
                 "uris":[
                     {"match": None,"uri": url}
@@ -53,7 +54,14 @@ class Converter():
         else:
             return "/".join(entry.group.path)
 
-    def _add_bw_entry_to_entires_dict(self, entry):
+    def _add_bw_entry_to_entires_dict(self, entry, custom_protected):
+        custom_properties = {}
+        for key, value in entry.custom_properties.items():
+            if key in custom_protected:
+                custom_properties[key] = [value, 1]
+            else:
+                custom_properties[key] = [value, 0]
+
         bw_item_object = self._create_bw_python_object(
             title = entry.title if entry.title else '_untitled',
             notes =  entry.notes if entry.notes and len(entry.notes) <= MAX_BW_ITEM_LENGTH else '',
@@ -61,7 +69,7 @@ class Converter():
             totp = entry.otp if entry.otp else '',
             username = entry.username if entry.username else '',
             password = entry.password if entry.password else '',
-            custom_properties = entry.custom_properties
+            custom_properties = custom_properties
         )
 
         folder = self._generate_folder_name(entry)
@@ -119,6 +127,7 @@ class Converter():
         # reset data structures
         self._kp_ref_entries = []
         self._entries = {}
+        custom_protected = []
 
         logging.info(f"Found {len(kp.entries)} entries in KeePass DB. Parsing now...")
         for entry in kp.entries:
@@ -135,8 +144,12 @@ class Converter():
                 self._kp_ref_entries.append(entry)
                 continue
 
+            for field, value in entry.custom_properties.items():
+                if entry._xpath('String[Key[text()="{}"]]/Value'.format(field), first=True).attrib.get("Protected", "False") == "True":
+                    custom_protected.append(field)
+
             # Normal entry
-            self._add_bw_entry_to_entires_dict(entry)
+            self._add_bw_entry_to_entires_dict(entry, custom_protected)
 
         logging.info(f"Parsed {len(self._entries)} entries")
 
@@ -173,7 +186,7 @@ class Converter():
                     ref_entry["login"]["uris"].append({"match": None,"uri": kp_entry.url})
                 else:
                     # => create new bitwarden item
-                    self._add_bw_entry_to_entires_dict(kp_entry)
+                    self._add_bw_entry_to_entires_dict(kp_entry, None)
 
             except Exception as e:
                 logging.warning(f"!! Could not resolve entry for {kp_entry.group.path}{kp_entry.title} [{str(kp_entry.uuid)}] !!")
