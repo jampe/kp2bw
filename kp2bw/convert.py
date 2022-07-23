@@ -25,7 +25,6 @@ class Converter():
         }
 
     def _create_bw_python_object(self, title, notes, url, totp, username, password, custom_properties):
-        print('BW Object Custom Prop: ', custom_properties)
         return {
             "organizationId": None,
             "folderId": None,
