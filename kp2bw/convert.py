@@ -54,7 +54,7 @@ class Converter():
         else:
             return "/".join(entry.group.path)
 
-    def _add_bw_entry_to_entires_dict(self, entry, custom_protected):
+    def _add_bw_entry_to_entries_dict(self, entry, custom_protected):
         custom_properties = {}
         for key, value in entry.custom_properties.items():
             if key in custom_protected:
@@ -149,7 +149,7 @@ class Converter():
                     custom_protected.append(field)
 
             # Normal entry
-            self._add_bw_entry_to_entires_dict(entry, custom_protected)
+            self._add_bw_entry_to_entries_dict(entry, custom_protected)
 
         logging.info(f"Parsed {len(self._entries)} entries")
 
@@ -186,7 +186,7 @@ class Converter():
                     ref_entry["login"]["uris"].append({"match": None,"uri": kp_entry.url})
                 else:
                     # => create new bitwarden item
-                    self._add_bw_entry_to_entires_dict(kp_entry, None)
+                    self._add_bw_entry_to_entries_dict(kp_entry, None)
 
             except Exception as e:
                 logging.warning(f"!! Could not resolve entry for {kp_entry.group.path}{kp_entry.title} [{str(kp_entry.uuid)}] !!")
