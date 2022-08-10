@@ -1,1 +1,4 @@
 kp2bw/__pycache__/
+.env/
+build/
+.vscode/

@@ -19,6 +19,12 @@ def _argparser():
     parser.add_argument('-kppw', dest='kp_pw', help='KeePass db password', default=None)
     parser.add_argument('-kpkf', dest='kp_keyfile', help='KeePass db key file', default=None)
     parser.add_argument('-bwpw', dest='bw_pw', help='Bitwarden password', default=None)
+    parser.add_argument('-bworg', dest='bw_org', help='Bitwarden Organization Id', default=None)
+    parser.add_argument('-bwcoll', dest='bw_coll', help='Id of Org-Collection, or \'auto\' to use name from toplevel-folders', default=None)
+    parser.add_argument('-path2name', dest='path2name', help='Prepend folderpath of entries to each name',
+                        action="store_const", const=True, default=True),
+    parser.add_argument('-path2nameskip', dest='path2nameskip', help='Skip first X folders for path2name (default: 1)',
+                        default=1, type=int ),
     parser.add_argument('-y', dest='skip_confirm', help='Skips the confirm bw installation question',
                         action="store_const", const=True, default=False)
     parser.add_argument('-v', dest='verbose', help='Verbose output', action="store_const", const=True, default=False)
@@ -34,6 +40,11 @@ def _read_password(arg, prompt):
 
 def main():
     args = _argparser().parse_args()
+
+    if (args.bw_coll and not args.bw_org):
+        sys.stderr.write(f'ERROR: -bwcoll requires --bworg\n\n')
+        _argparser().print_help()
+        sys.exit(2)
 
     # logging
     if args.verbose:
@@ -65,7 +76,12 @@ def main():
         keepass_file_path=args.keepass_file,
         keepass_password=kp_pw,
         keepass_keyfile_path=args.kp_keyfile,
-        bitwarden_password=bw_pw)
+        bitwarden_password=bw_pw,
+        bitwarden_organization_id=args.bw_org,
+        bitwarden_coll_id=args.bw_coll,
+        path2name=args.path2name,
+        path2nameskip=args.path2nameskip,
+        )
     c.convert()
 
     print(" ")

@@ -73,6 +73,11 @@ optional arguments:
   -kppw KP_PW       KeePass db password
   -kpkf KP_KEYFILE  KeePass db key file
   -bwpw BW_PW       Bitwarden Password
+  -bworg BW_OrgId   Id of Organization to Upload Into
+  -bwcoll BW_CollId Id of Org-Collection, or 'auto' to use name from toplevel-folders
+  -path2name        Prepend folderpath of entries to each name
+  -path2nameskip PATH2NAMESKIP
+                    Skip first X folders for path2name (default: 1)
   -y                Skips the confirm bw installation question
   -v                Verbose output
 ```

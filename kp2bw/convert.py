@@ -1,5 +1,6 @@
 import json
 import logging
+from itertools import islice
 
 from enum import Enum
 from pykeepass import PyKeePass
@@ -10,11 +11,16 @@ KP_REF_IDENTIFIER = "{REF:"
 MAX_BW_ITEM_LENGTH = 10 * 1000
 
 class Converter():
-    def __init__(self, keepass_file_path, keepass_password, keepass_keyfile_path, bitwarden_password):
+    def __init__(self, keepass_file_path, keepass_password, keepass_keyfile_path, bitwarden_password,
+            bitwarden_organization_id, bitwarden_coll_id, path2name, path2nameskip):
         self._keepass_file_path = keepass_file_path
         self._keepass_password = keepass_password
         self._keepass_keyfile_path = keepass_keyfile_path
         self._bitwarden_password = bitwarden_password
+        self._bitwarden_organization_id = bitwarden_organization_id
+        self._bitwarden_coll_id = bitwarden_coll_id
+        self._path2name = path2name
+        self._path2nameskip = path2nameskip
 
         self._kp_ref_entries = []
         self._entries = {}
@@ -24,9 +30,11 @@ class Converter():
             "password": "P"
         }
 
-    def _create_bw_python_object(self, title, notes, url, totp, username, password, custom_properties):
+    def _create_bw_python_object(self, title, notes, url, totp, username, password, custom_properties, collectionId, firstlevel):
         return {
-            "organizationId": None,
+            "organizationId": self._bitwarden_organization_id,
+            "collectionIds": collectionId,
+            "firstlevel": firstlevel,
             "folderId": None,
             "type":1,
             "name": title,
@@ -53,18 +61,41 @@ class Converter():
         else:
             return "/".join(entry.group.path)
 
+    
+    def _generate_prefix(self, entry, skip):
+        if not entry.group.path or entry.group.path == "/":
+            return None
+        else:
+            out=""
+            for item in islice(entry.group.path, skip, None):
+                out += item +  ' / '
+            return out
+
+    def _get_folder_firstlevel(self, entry):
+        if not entry.group.path or entry.group.path == "/":
+            return None
+        else:
+            return entry.group.path[0]
+
     def _add_bw_entry_to_entires_dict(self, entry):
+
+        folder = self._generate_folder_name(entry)
+        prefix = ""
+        if folder and self._path2name:
+            prefix = self._generate_prefix(entry, self._path2nameskip)
+
         bw_item_object = self._create_bw_python_object(
-            title = entry.title if entry.title else '_untitled',
+            title = prefix + entry.title if entry.title else prefix + '_untitled',
             notes =  entry.notes if entry.notes and len(entry.notes) <= MAX_BW_ITEM_LENGTH else '',
             url = entry.url if entry.url else '',
             totp = entry.otp if entry.otp else '',
             username = entry.username if entry.username else '',
             password = entry.password if entry.password else '',
-            custom_properties = entry.custom_properties
+            custom_properties = entry.custom_properties,
+            collectionId = self._bitwarden_coll_id,
+            firstlevel = self._get_folder_firstlevel(entry)
         )
 
-        folder = self._generate_folder_name(entry)
 
         # get attachments to store later on
         attachments = [(key, value) for key,value in entry.custom_properties.items() if value is not None and len(value) > MAX_BW_ITEM_LENGTH]
@@ -184,22 +215,51 @@ class Converter():
         i = 1
         max_i = len(self._entries)
 
-        bw = BitwardenClient(self._bitwarden_password)
+        logging.info(f"Connecting and reading existing folders and entries")
+
+        bw = BitwardenClient(self._bitwarden_password, self._bitwarden_organization_id)
+
+        #if self._bitwarden_coll_id == 'auto':
+            # lookup collections
+            
+
+
         for kp_id, value in self._entries.items():
+
             if len(value) == 2:
                 (folder, bw_item_object) = value
                 attachments = None
             else:
                 (folder, bw_item_object, attachments) = value
 
-            logging.info(f"[{i} of {max_i}] Creating Bitwarden entry in {folder} for {bw_item_object['name']}...")
+            # collection
+            collectionId = None
+            collInfo=""
+            if bw_item_object["firstlevel"]:
+                if self._bitwarden_coll_id == 'auto':
+                    logging.info(f"Searching Collection {bw_item_object['firstlevel']}")
+                    collectionId = bw.create_org_get_collection(bw_item_object['firstlevel'])
+                    collInfo=" in specified Collection " + bw_item_object['firstlevel']
+
+                elif self._bitwarden_coll_id:
+                    collectionId = self._bitwarden_coll_id
+                    collInfo=" in specified Collection "
+                
+            
+            # update object
+            del bw_item_object["firstlevel"]
+            bw_item_object["collectionIds"] = collectionId
+            
+            logging.info(f"[{i} of {max_i}] Creating Bitwarden entry in {folder} for {bw_item_object['name']}{collInfo}...")
 
             # create entry
             output = bw.create_entry(folder, bw_item_object)
             if "error" in output.lower():
                 logging.error(f"!! ERROR: Creation of entry failed: {output} !!")
+                i += 1
                 continue
             if "skip" in output:
+                i += 1
                 continue
 
             # upload attachments
