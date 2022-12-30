@@ -17,7 +17,7 @@ class BitwardenClient():
             raise Exception("Bitwarden Cli not installed! See https://help.bitwarden.com/article/cli/#download--install for help")
         
         # login
-        self._key = self._exec(f"bw unlock {password} --raw")
+        self._key = self._exec(f"bw unlock \"{password}\" --raw")
         if "error" in self._key:
             raise Exception("Could not unlock the Bitwarden db. Is the Master Password correct and are bw cli tools set up correctly?")
 
