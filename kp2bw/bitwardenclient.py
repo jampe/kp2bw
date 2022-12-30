@@ -11,13 +11,16 @@ from subprocess import STDOUT, CalledProcessError, check_output
 class BitwardenClient():
     TEMPORARY_ATTACHMENT_FOLDER = "attachment-temp"
 
-    def __init__(self, password):
+    def __init__(self, password, orgId):
         # check for bw cli installation
         if not "bitwarden" in self._exec("bw"):
             raise Exception("Bitwarden Cli not installed! See https://help.bitwarden.com/article/cli/#download--install for help")
         
+        # save org
+        self._orgId = orgId
+
         # login
-        self._key = self._exec(f"bw unlock {password} --raw")
+        self._key = self._exec(f"bw unlock \"{password}\" --raw")
         if "error" in self._key:
             raise Exception("Could not unlock the Bitwarden db. Is the Master Password correct and are bw cli tools set up correctly?")
 
@@ -30,7 +33,13 @@ class BitwardenClient():
 
         # get existing entries
         self._folder_entries = self._get_existing_folder_entries()
-    
+
+        # get existing collections
+        if orgId:
+            self._colls = {coll["name"]: coll["id"] for coll in json.loads(self._exec_with_session(f"bw list org-collections --organizationid {orgId}"))}
+        else:
+            self._colls = None
+
     def __del__(self):
         # cleanup temp directory
         self._remove_temporary_attachment_folder()
@@ -140,3 +149,35 @@ class BitwardenClient():
             os.remove(path_to_file_on_disk)
         
         return output
+
+    def create_org_get_collection(self, collectionname):
+
+        if not collectionname: return None
+
+        # check for existing
+        if self._colls.get(collectionname):
+            return self._colls.get(collectionname)
+
+        # get template
+        entry = json.loads(self._exec_with_session(f"bw get template org-collection"))
+
+        # set org and Name
+        entry['name'] = collectionname
+        entry['organizationId'] = self._orgId
+
+
+        json_str = json.dumps(entry)
+
+        # convert string to base64
+        json_b64 = base64.b64encode(json_str.encode("UTF-8")).decode("UTF-8")
+
+        output = self._exec_with_session(f'{self._get_platform_dependent_echo_str(json_b64)} | bw create  org-collection --organizationid {self._orgId}')
+        if (not output): return None
+        data = json.loads(output)
+        if (not data["id"]): return None
+        newCollId = data["id"]
+
+        #store in cache
+        self._colls[collectionname] = newCollId
+
+        return newCollId
