@@ -76,7 +76,7 @@ class Converter():
         else:
             return entry.group.path[0]
 
-    def _add_bw_entry_to_entires_dict(self, entry):
+    def _add_bw_entry_to_entries_dict(self, entry, custom_protected):
         folder = self._generate_folder_name(entry)
         prefix = ""
         if folder and self._path2name:
