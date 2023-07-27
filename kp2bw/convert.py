@@ -12,13 +12,14 @@ MAX_BW_ITEM_LENGTH = 10 * 1000
 
 class Converter():
     def __init__(self, keepass_file_path, keepass_password, keepass_keyfile_path, bitwarden_password,
-            bitwarden_organization_id, bitwarden_coll_id, path2name, path2nameskip):
+            bitwarden_organization_id, bitwarden_coll_id, nestcoll, path2name, path2nameskip):
         self._keepass_file_path = keepass_file_path
         self._keepass_password = keepass_password
         self._keepass_keyfile_path = keepass_keyfile_path
         self._bitwarden_password = bitwarden_password
         self._bitwarden_organization_id = bitwarden_organization_id
         self._bitwarden_coll_id = bitwarden_coll_id
+        self._nestcoll = nestcoll
         self._path2name = path2name
         self._path2nameskip = path2nameskip
 
@@ -79,7 +80,8 @@ class Converter():
     def _add_bw_entry_to_entries_dict(self, entry, custom_protected):
         folder = self._generate_folder_name(entry)
         prefix = ""
-        if folder and self._path2name:
+        # if nest collections is turned on, prefix is not needed for collection names
+        if folder and self._path2name and not self._nestcoll:
             prefix = self._generate_prefix(entry, self._path2nameskip)
 
         custom_properties = {}
@@ -155,7 +157,16 @@ class Converter():
         # reset data structures
         self._kp_ref_entries = []
         self._entries = {}
+        self._kp_folders = []
         custom_protected = []
+
+        # search for folders in keepass and save them for later
+        logging.info(f"Found {len(kp.groups)} folders in KeePass DB.")
+
+        for entry in kp.groups:
+            # get all folders except top level folder
+            if entry.parentgroup is not None:
+                self._kp_folders.append('/'.join(entry.path))
 
         logging.info(f"Found {len(kp.entries)} entries in KeePass DB. Parsing now...")
         for entry in kp.entries:
@@ -232,6 +243,27 @@ class Converter():
         #if self._bitwarden_coll_id == 'auto':
             # lookup collections
             
+        # if nestcoll is on, check collections and create non-existing entries
+        if self._nestcoll:
+            children = bw._get_collection_children(self._bitwarden_coll_id)
+            folder_coll_map = {bw._parent_name: self._bitwarden_coll_id}
+            # iterate through keepass subfolders and create subcollections
+            for folder in self._kp_folders:
+                collExists = False
+                childId = ""
+                for child in children:
+                    # get collection name without the parent collection name
+                    bw_child_coll = child['name'].split('/')
+                    bw_child_coll = '/'.join(bw_child_coll[-(len(bw_child_coll)-1):])
+                    if bw_child_coll == folder:
+                        logging.info(f"Collection for folder {folder} already exists, skipping creation")
+                        collExists = True
+                        childId = child['id']
+                        break
+                if collExists == False:
+                    # create a collection if it does not yet exist
+                    childId = bw._create_sub_colllection(bw._parent_name + "/" + folder, self._bitwarden_coll_id)
+                folder_coll_map.update({folder: childId})
 
 
         for kp_id, value in self._entries.items():
@@ -252,8 +284,15 @@ class Converter():
                     collInfo=" in specified Collection " + bw_item_object['firstlevel']
 
                 elif self._bitwarden_coll_id:
+                    # if nest collections is turned on, then map item to child, not parent collection
+                    if self._nestcoll:
+                        collectionId = folder_coll_map[folder]
+                    else:
+                        collectionId = self._bitwarden_coll_id
+                        collInfo=" in specified Collection "
+            else:
+                if self._nestcoll:
                     collectionId = self._bitwarden_coll_id
-                    collInfo=" in specified Collection "
                 
             
             # update object
@@ -263,7 +302,10 @@ class Converter():
             logging.info(f"[{i} of {max_i}] Creating Bitwarden entry in {folder} for {bw_item_object['name']}{collInfo}...")
 
             # create entry
-            output = bw.create_entry(folder, bw_item_object)
+            if self._nestcoll:
+                # remove folder creation when using nested collections (not needed?)
+                bw_item_object['folderId'] = None
+            output = bw.create_entry(folder, bw_item_object, self._nestcoll)
             if "error" in output.lower():
                 logging.error(f"!! ERROR: Creation of entry failed: {output} !!")
                 i += 1
