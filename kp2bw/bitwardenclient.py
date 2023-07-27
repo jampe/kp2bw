@@ -74,7 +74,48 @@ class BitwardenClient():
         items.sort(key=lambda item: item["folderId"])
         return {folder_id_lookup_helper[folder_id] if folder_id in folder_id_lookup_helper else None: [entry["name"] for entry in entries] 
             for folder_id, entries in groupby(items, key=lambda item: item["folderId"])}
+    def _get_existing_collection_entries(self, collectionId):
+        # finds all the entries for the given collection id
+        folder_id_lookup_helper = {folder_id: folder_name for folder_name,folder_id in self._folders.items()}
+        items = json.loads(self._exec_with_session(f"bw list items --collectionid {collectionId}"))
 
+        items.sort(key=lambda item: item["name"])
+        names = []
+        # the unique identifier is made up of a name and username combination, this is not guaranteed to be unique
+        # can cause unique items to be skipped during import TODO: more unique identifier
+        for item in items:
+            username = ""
+            if item['login']:
+                if item['login']['username']:
+                    username = item['login']['username']
+            names.append(item['name'] + " - " + username)
+
+        return names
+    
+    def _get_collection_children(self,parentid):
+        # gets all the collections that are nested under the parent collection
+        items = json.loads(self._exec_with_session("bw list collections"))
+        
+        parent = json.loads(self._exec_with_session(f"bw get collection {parentid}"))
+
+        self._parent_name = parent['name']
+
+        children = []
+
+        # find collections which contain the parent name
+        for item in items:
+            if item['name'].startswith(parent['name'] + "/"):
+                child = {}
+                child['name'] = item['name']
+                child['id'] = item['id']
+                children.append(child)
+
+        return children
+
+    def _create_sub_colllection(self,collname, parentid):
+        # creates a collection under the given parent collection
+        childCreate = json.loads(self._exec_with_session(f"bw get template org-collection --session '{self._key}' | jq \".name = \\\"{collname}\\\" |.groups = [] | .organizationId=\\\"{self._orgId}\\\"\" | bw encode | bw create org-collection --organizationid {self._orgId}"))
+        return childCreate['id']
     def _exec_with_session(self, command):
         return self._exec(f"{command} --session '{self._key}'")
 
@@ -100,18 +141,26 @@ class BitwardenClient():
 
         self._folders[output_obj["name"]] = output_obj["id"]
 
-    def create_entry(self, folder, entry):
-        # check if already exists
-        if folder in self._folder_entries and entry["name"] in self._folder_entries[folder]:
-            logging.info(f"-- Entry {entry['name']} already exists in folder {folder}. skipping...")
-            return "skip"
+    def create_entry(self, folder, entry, nestcoll):
+        # folder creation not turned on for nested collections, so skip
+        if not nestcoll:
+            # check if already exists
+            if folder in self._folder_entries and entry["name"] in self._folder_entries[folder]:
+                logging.info(f"-- Entry {entry['name']} already exists in folder {folder}. skipping...")
+                return "skip"
 
-        # create folder if exists
-        if folder:
-            self.create_folder(folder)
+            # create folder if exists
+            if folder:
+                self.create_folder(folder)
 
-            # set id
-            entry["folderId"] = self._folders[folder]
+                # set id
+                entry["folderId"] = self._folders[folder]
+        else:
+            # check for existing entries in collection
+            coll_entries = self._get_existing_collection_entries(entry['collectionIds'])
+            if entry['name'] + " - " + entry['login']['username'] in coll_entries:
+                logging.info(f"-- Entry {entry['name']} already exists in collection {entry['collectionIds']}. skipping...")
+                return "skip"
 
         json_str = json.dumps(entry)
 
