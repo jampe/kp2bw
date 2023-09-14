@@ -61,7 +61,7 @@ kp2bw passwords.kdbx
 
 The help text of the tool is listed below:
 ```
-usage: kp2bw [-h] [-kppw KP_PW] [-kpkf KP_KEYFILE] [-bwpw BW_PW] [-y] [-v] keepass_file
+usage: kp2bw [-h] [-kppw KP_PW] [-kpkf KP_KEYFILE] [-bwpw BW_PW] [-y] [-v] keepass_file [-import_tags tags1 tags2] 
 
 KeePass 2.x to Bitwarden converter by @jampe
 
@@ -75,6 +75,7 @@ optional arguments:
   -bwpw BW_PW       Bitwarden Password
   -bworg BW_OrgId   Id of Organization to Upload Into
   -bwcoll BW_CollId Id of Org-Collection, or 'auto' to use name from toplevel-folders
+  -import_tags      Only import items with tags
   -path2name        Prepend folderpath of entries to each name
   -path2nameskip PATH2NAMESKIP
                     Skip first X folders for path2name (default: 1)
