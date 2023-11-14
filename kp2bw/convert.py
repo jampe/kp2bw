@@ -12,7 +12,7 @@ MAX_BW_ITEM_LENGTH = 10 * 1000
 
 class Converter():
     def __init__(self, keepass_file_path, keepass_password, keepass_keyfile_path, bitwarden_password,
-            bitwarden_organization_id, bitwarden_coll_id, path2name, path2nameskip):
+            bitwarden_organization_id, bitwarden_coll_id, path2name, path2nameskip, import_tags):
         self._keepass_file_path = keepass_file_path
         self._keepass_password = keepass_password
         self._keepass_keyfile_path = keepass_keyfile_path
@@ -21,7 +21,7 @@ class Converter():
         self._bitwarden_coll_id = bitwarden_coll_id
         self._path2name = path2name
         self._path2nameskip = path2nameskip
-
+        self._import_tags = import_tags
         self._kp_ref_entries = []
         self._entries = {}
 
@@ -177,7 +177,19 @@ class Converter():
                     custom_protected.append(field)
 
             # Normal entry
-            self._add_bw_entry_to_entries_dict(entry, custom_protected)
+            if self._import_tags:
+                if isinstance(self._import_tags, list):
+                    for tag in self._import_tags:
+                        if entry.tags != None:
+                            if tag in entry.tags:
+                                self._add_bw_entry_to_entries_dict(entry, custom_protected)
+                            else: pass
+                        else: pass
+                else:
+                    logging.error("The import_tags parameter must be a list of strings.")
+                    raise SystemExit
+                
+            else:self._add_bw_entry_to_entries_dict(entry, custom_protected)
 
         logging.info(f"Parsed {len(self._entries)} entries")
 

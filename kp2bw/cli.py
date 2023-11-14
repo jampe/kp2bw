@@ -20,6 +20,7 @@ def _argparser():
     parser.add_argument('-kpkf', dest='kp_keyfile', help='KeePass db key file', default=None)
     parser.add_argument('-bwpw', dest='bw_pw', help='Bitwarden password', default=None)
     parser.add_argument('-bworg', dest='bw_org', help='Bitwarden Organization Id', default=None)
+    parser.add_argument('-import_tags', dest='import_tags', help='Only import tagged items', nargs='+',default=None)
     parser.add_argument('-bwcoll', dest='bw_coll', help='Id of Org-Collection, or \'auto\' to use name from toplevel-folders', default=None)
     parser.add_argument('-path2name', dest='path2name', help='Prepend folderpath of entries to each name',
                         action="store_const", const=True, default=True),
@@ -81,6 +82,7 @@ def main():
         bitwarden_coll_id=args.bw_coll,
         path2name=args.path2name,
         path2nameskip=args.path2nameskip,
+        import_tags=args.import_tags
         )
     c.convert()
 
