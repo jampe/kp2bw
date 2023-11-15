@@ -16,17 +16,6 @@ This tool helps to convert existing KeePass databases to Bitwarden accounts. It 
 * **Multi OS support**: Works on Windows, macOS, & Linux.
 
 ## Installation
-1) choose either one of the installation methods below
-
-### Install using the pre built whl file
-1) Make sure you've installed python 3 and pip on your system.
-1) Download the newest whl release from the releases
-1) Install kp2bw via pip:
-  ```
-  pip install kp2bw-1.1-py3-none-any.whl
-  ```
-
-### Install from source
 1) Make sure you've installed python 3 and pip on your system.
 1) Clone / download this repository and enter the directory.
 1) Create a new python venv and activate it
