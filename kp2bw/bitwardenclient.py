@@ -11,7 +11,7 @@ from subprocess import STDOUT, CalledProcessError, check_output
 class BitwardenClient():
     TEMPORARY_ATTACHMENT_FOLDER = "attachment-temp"
 
-    def __init__(self, password, orgId):
+    def __init__(self, password, orgId, session=None):
         # check for bw cli installation
         if not "bitwarden" in self._exec("bw"):
             raise Exception("Bitwarden Cli not installed! See https://help.bitwarden.com/article/cli/#download--install for help")
@@ -20,9 +20,13 @@ class BitwardenClient():
         self._orgId = orgId
 
         # login
-        self._key = self._exec(f"bw unlock \"{password}\" --raw")
-        if "error" in self._key:
-            raise Exception("Could not unlock the Bitwarden db. Is the Master Password correct and are bw cli tools set up correctly?")
+        if session:
+            logging.info("Using existing Bitwarden session")
+            self._key = session
+        else:
+            self._key = self._exec(f"bw unlock \"{password}\" --raw")
+            if "error" in self._key:
+                raise Exception("Could not unlock the Bitwarden db. Is the Master Password correct and are bw cli tools set up correctly?")
 
         # make sure data is up to date
         if not "Syncing complete." in self._exec_with_session("bw sync"):

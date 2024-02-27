@@ -20,6 +20,7 @@ def _argparser():
     parser.add_argument('-kpkf', dest='kp_keyfile', help='KeePass db key file', default=None)
     parser.add_argument('-bwpw', dest='bw_pw', help='Bitwarden password', default=None)
     parser.add_argument('-bworg', dest='bw_org', help='Bitwarden Organization Id', default=None)
+    parser.add_argument('-bwsession', dest='bw_session', help='Bitwarden session token (aquire with bw unlock)', default=None)
     parser.add_argument('-import_tags', dest='import_tags', help='Only import tagged items', nargs='+',default=None)
     parser.add_argument('-bwcoll', dest='bw_coll', help='Id of Org-Collection, or \'auto\' to use name from toplevel-folders', default=None)
     parser.add_argument('-path2name', dest='path2name', help='Prepend folderpath of entries to each name',
@@ -70,7 +71,7 @@ def main():
 
     # stdin password
     kp_pw = _read_password(args.kp_pw, "Please enter your KeePass 2.x db password: ")
-    bw_pw = _read_password(args.bw_pw, "Please enter your Bitwarden password: ")
+    bw_pw = _read_password((args.bw_pw or args.bw_session), "Please enter your Bitwarden password: ")
 
     # call converter
     c = Converter(
@@ -78,6 +79,7 @@ def main():
         keepass_password=kp_pw,
         keepass_keyfile_path=args.kp_keyfile,
         bitwarden_password=bw_pw,
+        bitwarden_session=args.bw_session,
         bitwarden_organization_id=args.bw_org,
         bitwarden_coll_id=args.bw_coll,
         path2name=args.path2name,

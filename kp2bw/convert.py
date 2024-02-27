@@ -11,12 +11,13 @@ KP_REF_IDENTIFIER = "{REF:"
 MAX_BW_ITEM_LENGTH = 10 * 1000
 
 class Converter():
-    def __init__(self, keepass_file_path, keepass_password, keepass_keyfile_path, bitwarden_password,
+    def __init__(self, keepass_file_path, keepass_password, keepass_keyfile_path, bitwarden_password, bitwarden_session,
             bitwarden_organization_id, bitwarden_coll_id, path2name, path2nameskip, import_tags):
         self._keepass_file_path = keepass_file_path
         self._keepass_password = keepass_password
         self._keepass_keyfile_path = keepass_keyfile_path
         self._bitwarden_password = bitwarden_password
+        self._bitwarden_session = bitwarden_session
         self._bitwarden_organization_id = bitwarden_organization_id
         self._bitwarden_coll_id = bitwarden_coll_id
         self._path2name = path2name
@@ -239,7 +240,8 @@ class Converter():
 
         logging.info(f"Connecting and reading existing folders and entries")
 
-        bw = BitwardenClient(self._bitwarden_password, self._bitwarden_organization_id)
+        bw = BitwardenClient(self._bitwarden_password, self._bitwarden_organization_id, self._bitwarden_session)
+
 
         #if self._bitwarden_coll_id == 'auto':
             # lookup collections
