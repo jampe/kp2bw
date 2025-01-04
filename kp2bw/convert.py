@@ -131,7 +131,7 @@ class Converter():
         if lookup_mode == "I":
             # KP_ID lookup
             try:
-                return self._entries[ref_compare_string]
+                return self._entries[ref_compare_string.upper()]
             except Exception as e:
                 logging.warning(f"!! - Could not resolve REF to {ref_compare_string} !!")
                 raise e
