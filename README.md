@@ -19,11 +19,11 @@ This tool helps to convert existing KeePass databases to Bitwarden accounts. It 
 1) Make sure you've installed:
    1) python 3 and pip on your system.
    1) [Bitwarden CLI tool](https://help.bitwarden.com/article/cli/) (check the [github releases](https://github.com/bitwarden/clients/releases/) if you want the OSS version of the client)
-1) Clone / download this repository and enter the directory.
+2) Clone / download this repository and enter the directory.
   ```
   git clone git@github.com:jampe/kp2bw.git
   ```
-1) Create a new python venv and activate it
+3) Create a new python venv and activate it
   ```
   python -m venv .env/kp2bw
 
@@ -33,7 +33,7 @@ This tool helps to convert existing KeePass databases to Bitwarden accounts. It 
   Linux:
   . .env/kp2bw/bin/activate
   ```
-1) install inside the venv
+4) install inside the venv
   ```
   pip install .
   ```
