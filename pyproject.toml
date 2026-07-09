@@ -1,3 +1,9 @@
+[project]
+name = "kp2bw"
+version = "1.1"
+license = "MIT"
+license-files = ["LICEN[CS]E*"]
+
 [build-system]
 build-backend = "setuptools.build_meta"
 requires = ["setuptools", "wheel"]
