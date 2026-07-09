@@ -128,6 +128,15 @@ class BitwardenClient():
 
         return output
 
+    def _validate_attachment_filename(self, filename: str) -> str:
+        """Validate and sanitize attachment filename using os.path.basename."""
+        safe_name = os.path.basename(filename)
+        if not safe_name or safe_name in ('.', '..'):
+            raise ValueError(f"Invalid attachment filename: {filename!r}")
+        if '\x00' in safe_name:
+            raise ValueError("Attachment filename contains null byte")
+        return safe_name
+
     def create_attachment(self, item_id, attachment):
         # store attachment on disk
         filename = ""
@@ -135,11 +144,11 @@ class BitwardenClient():
         if isinstance(attachment, tuple):
             # long custom property
             key, value = attachment
-            filename = key + ".txt"
+            filename = self._validate_attachment_filename(key + ".txt")
             data = value.encode("UTF-8")
         else:
             # real kp attachment
-            filename = attachment.filename
+            filename = self._validate_attachment_filename(attachment.filename)
             data = attachment.data
 
         # make sure temporary attachment folder exists
