@@ -4,12 +4,12 @@ import logging
 import os
 import platform
 import shutil
+import tempfile
 from itertools import groupby
 from subprocess import STDOUT, CalledProcessError, check_output
 
 
 class BitwardenClient():
-    TEMPORARY_ATTACHMENT_FOLDER = "attachment-temp"
 
     def __init__(self, password, orgId):
         # check for bw cli installation
@@ -40,17 +40,20 @@ class BitwardenClient():
         else:
             self._colls = None
 
-    def __del__(self):
-        # cleanup temp directory
+    def __enter__(self):
+        self._temp_dir = tempfile.mkdtemp(prefix="kp2bw-")
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
         self._remove_temporary_attachment_folder()
 
     def _create_temporary_attachment_folder(self):
-        if not os.path.isdir(self.TEMPORARY_ATTACHMENT_FOLDER):
-            os.mkdir(self.TEMPORARY_ATTACHMENT_FOLDER)
+        if not os.path.isdir(self._temp_dir):
+            os.mkdir(self._temp_dir)
 
     def _remove_temporary_attachment_folder(self):
-        if os.path.isdir(self.TEMPORARY_ATTACHMENT_FOLDER):
-            shutil.rmtree(self.TEMPORARY_ATTACHMENT_FOLDER)
+        if os.path.isdir(self._temp_dir):
+            shutil.rmtree(self._temp_dir)
 
     def _exec(self, command):
         try:
@@ -139,7 +142,7 @@ class BitwardenClient():
         # make sure temporary attachment folder exists
         self._create_temporary_attachment_folder()
 
-        path_to_file_on_disk = os.path.join(self.TEMPORARY_ATTACHMENT_FOLDER, filename)
+        path_to_file_on_disk = os.path.join(self._temp_dir, filename)
         with open(path_to_file_on_disk, "wb") as f:
             f.write(data)
         

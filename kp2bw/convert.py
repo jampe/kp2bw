@@ -239,62 +239,62 @@ class Converter():
 
         logging.info(f"Connecting and reading existing folders and entries")
 
-        bw = BitwardenClient(self._bitwarden_password, self._bitwarden_organization_id)
+        with BitwardenClient(self._bitwarden_password, self._bitwarden_organization_id) as bw:
 
-        #if self._bitwarden_coll_id == 'auto':
-            # lookup collections
+            #if self._bitwarden_coll_id == 'auto':
+                # lookup collections
             
 
 
-        for kp_id, value in self._entries.items():
+            for kp_id, value in self._entries.items():
 
-            if len(value) == 2:
-                (folder, bw_item_object) = value
-                attachments = None
-            else:
-                (folder, bw_item_object, attachments) = value
+                if len(value) == 2:
+                    (folder, bw_item_object) = value
+                    attachments = None
+                else:
+                    (folder, bw_item_object, attachments) = value
 
-            # collection
-            collectionId = None
-            collInfo=""
-            if bw_item_object["firstlevel"]:
-                if self._bitwarden_coll_id == 'auto':
-                    logging.info(f"Searching Collection {bw_item_object['firstlevel']}")
-                    collectionId = bw.create_org_get_collection(bw_item_object['firstlevel'])
-                    collInfo=" in specified Collection " + bw_item_object['firstlevel']
+                # collection
+                collectionId = None
+                collInfo=""
+                if bw_item_object["firstlevel"]:
+                    if self._bitwarden_coll_id == 'auto':
+                        logging.info(f"Searching Collection {bw_item_object['firstlevel']}")
+                        collectionId = bw.create_org_get_collection(bw_item_object['firstlevel'])
+                        collInfo=" in specified Collection " + bw_item_object['firstlevel']
 
-                elif self._bitwarden_coll_id:
-                    collectionId = self._bitwarden_coll_id
-                    collInfo=" in specified Collection "
+                    elif self._bitwarden_coll_id:
+                        collectionId = self._bitwarden_coll_id
+                        collInfo=" in specified Collection "
                 
             
-            # update object
-            del bw_item_object["firstlevel"]
-            bw_item_object["collectionIds"] = collectionId
+                # update object
+                del bw_item_object["firstlevel"]
+                bw_item_object["collectionIds"] = collectionId
             
-            logging.info(f"[{i} of {max_i}] Creating Bitwarden entry in {folder} for {bw_item_object['name']}{collInfo}...")
+                logging.info(f"[{i} of {max_i}] Creating Bitwarden entry in {folder} for {bw_item_object['name']}{collInfo}...")
 
-            # create entry
-            output = bw.create_entry(folder, bw_item_object)
-            if "error" in output.lower():
-                logging.error(f"!! ERROR: Creation of entry failed: {output} !!")
+                # create entry
+                output = bw.create_entry(folder, bw_item_object)
+                if "error" in output.lower():
+                    logging.error(f"!! ERROR: Creation of entry failed: {output} !!")
+                    i += 1
+                    continue
+                if "skip" in output:
+                    i += 1
+                    continue
+
+                # upload attachments
+                if attachments:
+                    item_id = json.loads(output)["id"]
+
+                    for attachment in attachments:
+                        logging.info(f"        - Uploading attachment for item {bw_item_object['name']}...")
+                        res = bw.create_attachment(item_id, attachment)
+                        if "failed" in res:
+                            logging.error(f"!! ERROR: Uploading attachment failed: {res}")
+
                 i += 1
-                continue
-            if "skip" in output:
-                i += 1
-                continue
-
-            # upload attachments
-            if attachments:
-                item_id = json.loads(output)["id"]
-
-                for attachment in attachments:
-                    logging.info(f"        - Uploading attachment for item {bw_item_object['name']}...")
-                    res = bw.create_attachment(item_id, attachment)
-                    if "failed" in res:
-                        logging.error(f"!! ERROR: Uploading attachment failed: {res}")
-
-            i += 1
 
 
     def convert(self):
