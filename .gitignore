@@ -2,3 +2,7 @@ kp2bw/__pycache__/
 .env/
 build/
 .vscode/
+*.egg-info/
+dist/
+*.pyc
+__pycache__/

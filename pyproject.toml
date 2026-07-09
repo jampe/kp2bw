@@ -1,9 +1,36 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "kp2bw"
 version = "1.1"
+description = "Import an existing KeePass db with REF fields into Bitwarden"
+requires-python = ">=3.9"
 license = "MIT"
-license-files = ["LICEN[CS]E*"]
+authors = [
+    { name = "Daniel Jampen", email = "daniel@jampen.net" },
+]
+readme = "README.md"
+classifiers = [
+    "Development Status :: 7 - Inactive",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+dependencies = [
+    "pykeepass>=4.0.0",
+]
 
-[build-system]
-build-backend = "setuptools.build_meta"
-requires = ["setuptools", "wheel"]
+[project.urls]
+Homepage = "https://github.com/jampe/kp2bw"
+Repository = "https://github.com/jampe/kp2bw.git"
+
+[tool.setuptools.packages.find]
+include = ["kp2bw*"]
+
+[project.scripts]
+kp2bw = "kp2bw.cli:main"

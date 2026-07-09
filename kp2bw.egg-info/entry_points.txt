@@ -1,2 +1,0 @@
-[console_scripts]
-kp2bw = kp2bw.cli:main
