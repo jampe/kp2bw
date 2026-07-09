@@ -10,6 +10,25 @@ from .bitwardenclient import BitwardenClient
 KP_REF_IDENTIFIER = "{REF:"
 MAX_BW_ITEM_LENGTH = 10 * 1000
 
+
+def xpath_escape(text: str) -> str:
+    """Produce an XPath 1.0 string literal that safely represents *text*.
+
+    XPath 1.0 has no escape mechanism inside quoted string literals.
+    When *text* contains both ``'`` and ``"`` we use concat() to alternate
+    between the two quote types.
+    """
+    if "'" not in text:
+        return "'{}'".format(text)
+    if '"' not in text:
+        return '"{}"'.format(text)
+    # Both quotes appear: split on ' so parts are '-free and can be
+    # wrapped in single quotes; join parts with a literal ' (in double quotes).
+    parts = text.split("'")
+    inner = ", \"'\", ".join("'{}'".format(p) for p in parts)
+    return "concat({})".format(inner)
+
+
 class Converter():
     def __init__(self, keepass_file_path, keepass_password, keepass_keyfile_path, bitwarden_password,
             bitwarden_organization_id, bitwarden_coll_id, path2name, path2nameskip, import_tags):
@@ -173,7 +192,7 @@ class Converter():
                 continue
 
             for field, value in entry.custom_properties.items():
-                if entry._xpath('String[Key[text()="{}"]]/Value'.format(field), first=True).attrib.get("Protected", "False") == "True":
+                if entry._xpath('String[Key[text()={}]]/Value'.format(xpath_escape(field)), first=True).attrib.get("Protected", "False") == "True":
                     custom_protected.append(field)
 
             # Normal entry
