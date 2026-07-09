@@ -178,10 +178,6 @@ class Converter():
 
         logging.info(f"Found {len(kp.entries)} entries in KeePass DB. Parsing now...")
         for entry in kp.entries:
-            # if not entry.password and not entry.username and not entry.notes:
-            #     logging.warn(f"Ignoring entry {entry.title} since it has neither (1) a password, (2) a username, or (3) notes")
-            #     continue
-
             # prevent not iterable errors at "in" checks
             username = entry.username if entry.username else ''
             password = entry.password if entry.password else ''
