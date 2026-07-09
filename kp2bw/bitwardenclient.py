@@ -19,7 +19,7 @@ class BitwardenClient():
 
         # login
         self._key = self._exec(["bw", "unlock", "--raw"], stdin_data=password.encode("utf-8"), redact_log=True)
-        if "error" in self._key:
+        if "error" in self._key.lower() or "invalid" in self._key.lower():
             raise Exception("Could not unlock the Bitwarden db. Is the Master Password correct and are bw cli tools set up correctly?")
 
         # make sure data is up to date
