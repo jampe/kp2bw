@@ -1,42 +1,40 @@
-import base64
 import json
 import logging
 import os
-import platform
 import shutil
+import subprocess
 import tempfile
 from itertools import groupby
-from subprocess import STDOUT, CalledProcessError, check_output
 
 
 class BitwardenClient():
 
     def __init__(self, password, orgId):
         # check for bw cli installation
-        if not "bitwarden" in self._exec("bw"):
+        if not "bitwarden" in self._exec(["bw", "--version"]):
             raise Exception("Bitwarden Cli not installed! See https://help.bitwarden.com/article/cli/#download--install for help")
-        
+
         # save org
         self._orgId = orgId
 
         # login
-        self._key = self._exec(f"bw unlock \"{password}\" --raw")
+        self._key = self._exec(["bw", "unlock", password, "--raw"], redact_log=True)
         if "error" in self._key:
             raise Exception("Could not unlock the Bitwarden db. Is the Master Password correct and are bw cli tools set up correctly?")
 
         # make sure data is up to date
-        if not "Syncing complete." in self._exec_with_session("bw sync"):
+        if not "Syncing complete." in self._exec(["bw", "sync", "--session", self._key]):
             raise Exception("Could not sync the local state to your Bitwarden server")
 
         # get folder list
-        self._folders = {folder["name"]: folder["id"] for folder in json.loads(self._exec_with_session("bw list folders"))}
+        self._folders = {folder["name"]: folder["id"] for folder in json.loads(self._exec(["bw", "list", "folders", "--session", self._key]))}
 
         # get existing entries
         self._folder_entries = self._get_existing_folder_entries()
 
         # get existing collections
         if orgId:
-            self._colls = {coll["name"]: coll["id"] for coll in json.loads(self._exec_with_session(f"bw list org-collections --organizationid {orgId}"))}
+            self._colls = {coll["name"]: coll["id"] for coll in json.loads(self._exec(["bw", "list", "org-collections", "--organizationid", orgId, "--session", self._key]))}
         else:
             self._colls = None
 
@@ -55,49 +53,57 @@ class BitwardenClient():
         if os.path.isdir(self._temp_dir):
             shutil.rmtree(self._temp_dir)
 
-    def _exec(self, command):
+    def _exec(self, args, stdin_data=None, redact_log=False):
+        """Run a command with list-form args (avoiding shell). Return stdout on
+        success, stderr on failure, or the exception text as a fallback."""
+        log_safe = ' '.join(args)
+        if redact_log and len(args) >= 3 and args[1] == "unlock":
+            log_safe = f"{args[0]} {args[1]} ***REDACTED*** {' '.join(args[3:])}"
+        if hasattr(self, '_key') and self._key:
+            log_safe = log_safe.replace(self._key, "***REDACTED***")
+
+        logging.debug(f"-- Executing command: {log_safe}")
         try:
-            logging.debug(f"-- Executing command: {command}")
-            output = check_output(command, stderr=STDOUT, shell=True)
-        except CalledProcessError as e:
-            output = e.output
-        
-        logging.debug(f"  |- Output: {output}")
-        return str(output.decode("utf-8","ignore"))
+            proc = subprocess.run(
+                args,
+                input=stdin_data,
+                capture_output=True,
+                timeout=120,
+            )
+            output = proc.stdout if proc.returncode == 0 else proc.stderr
+        except subprocess.TimeoutExpired as e:
+            output = e.stderr or b"Timeout expired"
+        except Exception as e:
+            return str(e)
+
+        result = output.decode("utf-8", "ignore") if isinstance(output, bytes) else str(output)
+        logging.debug(f"  |- Output: {result[:500]}")
+        return result
 
     def _get_existing_folder_entries(self):
         folder_id_lookup_helper = {folder_id: folder_name for folder_name,folder_id in self._folders.items()}
-        items = json.loads(self._exec_with_session("bw list items"))
-        
+        items = json.loads(self._exec(["bw", "list", "items", "--session", self._key]))
+
         # fix None folderIds for entries without folders
         for item in items:
             if not item['folderId']:
                 item['folderId'] = ''
 
         items.sort(key=lambda item: item["folderId"])
-        return {folder_id_lookup_helper[folder_id] if folder_id in folder_id_lookup_helper else None: [entry["name"] for entry in entries] 
+        return {folder_id_lookup_helper[folder_id] if folder_id in folder_id_lookup_helper else None: [entry["name"] for entry in entries]
             for folder_id, entries in groupby(items, key=lambda item: item["folderId"])}
-
-    def _exec_with_session(self, command):
-        return self._exec(f"{command} --session '{self._key}'")
 
     def has_folder(self, folder):
         return folder in self._folders
-
-    def _get_platform_dependent_echo_str(self, string):
-        if platform.system() == "Windows":
-            return f'echo {string}'
-        else:
-            return f'echo \'{string}\''
 
     def create_folder(self, folder):
         if not folder or self.has_folder(folder):
             return
 
-        data = {"name": folder }
-        data_b64 = base64.b64encode(json.dumps(data).encode("UTF-8")).decode("UTF-8")
+        data = {"name": folder}
+        json_bytes = json.dumps(data).encode("utf-8")
 
-        output = self._exec_with_session(f'{self._get_platform_dependent_echo_str(data_b64)} | bw create folder')
+        output = self._exec(["bw", "create", "folder", "--session", self._key], stdin_data=json_bytes)
 
         output_obj = json.loads(output)
 
@@ -116,12 +122,9 @@ class BitwardenClient():
             # set id
             entry["folderId"] = self._folders[folder]
 
-        json_str = json.dumps(entry)
+        json_bytes = json.dumps(entry).encode("utf-8")
 
-        # convert string to base64
-        json_b64 = base64.b64encode(json_str.encode("UTF-8")).decode("UTF-8")
-
-        output = self._exec_with_session(f'{self._get_platform_dependent_echo_str(json_b64)} | bw create item')
+        output = self._exec(["bw", "create", "item", "--session", self._key], stdin_data=json_bytes)
 
         return output
 
@@ -145,12 +148,12 @@ class BitwardenClient():
         path_to_file_on_disk = os.path.join(self._temp_dir, filename)
         with open(path_to_file_on_disk, "wb") as f:
             f.write(data)
-        
+
         try:
-            output = self._exec_with_session(f'bw create attachment --file "{path_to_file_on_disk}" --itemid {item_id}')
+            output = self._exec(["bw", "create", "attachment", "--file", path_to_file_on_disk, "--itemid", item_id, "--session", self._key])
         finally:
             os.remove(path_to_file_on_disk)
-        
+
         return output
 
     def create_org_get_collection(self, collectionname):
@@ -162,19 +165,15 @@ class BitwardenClient():
             return self._colls.get(collectionname)
 
         # get template
-        entry = json.loads(self._exec_with_session(f"bw get template org-collection"))
+        entry = json.loads(self._exec(["bw", "get", "template", "org-collection", "--session", self._key]))
 
         # set org and Name
         entry['name'] = collectionname
         entry['organizationId'] = self._orgId
 
+        json_bytes = json.dumps(entry).encode("utf-8")
 
-        json_str = json.dumps(entry)
-
-        # convert string to base64
-        json_b64 = base64.b64encode(json_str.encode("UTF-8")).decode("UTF-8")
-
-        output = self._exec_with_session(f'{self._get_platform_dependent_echo_str(json_b64)} | bw create  org-collection --organizationid {self._orgId}')
+        output = self._exec(["bw", "create", "org-collection", "--organizationid", self._orgId, "--session", self._key], stdin_data=json_bytes)
         if (not output): return None
         data = json.loads(output)
         if (not data["id"]): return None
