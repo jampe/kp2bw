@@ -18,7 +18,7 @@ class BitwardenClient():
         self._orgId = orgId
 
         # login
-        self._key = self._exec(["bw", "unlock", password, "--raw"], redact_log=True)
+        self._key = self._exec(["bw", "unlock", "--raw"], stdin_data=password.encode("utf-8"), redact_log=True)
         if "error" in self._key:
             raise Exception("Could not unlock the Bitwarden db. Is the Master Password correct and are bw cli tools set up correctly?")
 
@@ -57,8 +57,6 @@ class BitwardenClient():
         """Run a command with list-form args (avoiding shell). Return stdout on
         success, stderr on failure, or the exception text as a fallback."""
         log_safe = ' '.join(args)
-        if redact_log and len(args) >= 3 and args[1] == "unlock":
-            log_safe = f"{args[0]} {args[1]} ***REDACTED*** {' '.join(args[3:])}"
         if hasattr(self, '_key') and self._key:
             log_safe = log_safe.replace(self._key, "***REDACTED***")
 
