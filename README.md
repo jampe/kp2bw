@@ -1,85 +1,94 @@
-# KP2BW - KeePass 2.x to Bitwarden Converter
+# kp2bw -- KeePass 2.x to Bitwarden Converter
 
-This tool helps to convert existing KeePass databases to Bitwarden accounts. It provides the following advantages compared to the importer by the bitwarden project:
+> This repository is no longer under active development by the original maintainer.
+>
+> The project has been forked and is actively maintained at
+> **[kjanat/kp2bw](https://github.com/kjanat/kp2bw)** (v3.7.0+, Python >=3.14).
+> The fork uses `bw serve` HTTP transport instead of the subprocess-based approach
+> in this version, supports nested collections, proper org/collection item creation,
+> and ongoing bug fixes. New users should use the fork.
 
-* **Import the all the data without having it ever touching the disk in unencrypted form** . Note: as attachments must be stored on disk prior to upload, those files will be on the disk during the upload phase. The files are removed from disk after uploading.
-* **Resolve KeePass reference entries**(username and password only) in a "Bitwarden" way. For each entry with a reference field, the following happens:
-  * If username and password are identical to the referenced entry, the url field will be added to the already existing entry
-  * Otherwise, a new entry is created
-* **Importing custom properties** from KeePass. The properties will be stored as text custom field in the corresponding Bitwarden item. If the property value is longer than 10,000 chars, it will be uploaded as attachment (Bitwarden limitation)
-* **Importing attachments** from KeePass
-* **Importing notes longer than 10,000 chars**. Notes can't be longer than this. The notes will be imported as an attachment named notes.txt.
-* **Idempotent import**: Entries won't be duplicated when running the import multiple times.
-* **Nested folders supported**: If you have nested folder in KeePass, kp2bw will recreate the same folder structure in Bitwarden for you.
-* Importing of the entries one by one, it is slower but it will prevent bitwarden db query max time exceeded errors for bigger KeePass databases
-* **Full UTF-8 support**
-* **Multi OS support**: Works on Windows, macOS, & Linux.
+---
+
+kp2bw converts KeePass 2.x databases to Bitwarden using the Bitwarden CLI.
+
+Compared to Bitwarden's built-in importer:
+
+- Data never touches disk unencrypted (except temporary attachment files,
+  which are removed after upload)
+- Resolves KeePass `{REF:...}` entries (username, password) -- matching
+  entries get merged URLs; non-matching entries are created separately
+- Custom properties imported as Bitwarden custom fields; values over 10,000
+  characters become attachments
+- Attachments imported from KeePass
+- Notes over 10,000 characters imported as `notes.txt` attachment
+- Idempotent import -- re-running does not duplicate entries
+- Nested folder structure recreated in Bitwarden
+- Entries imported one by one to avoid Bitwarden query timeout on large databases
+- UTF-8 support
+- Windows, macOS, Linux
 
 ## Installation
-1) Make sure you've installed python 3 and pip on your system.
-1) Clone / download this repository and enter the directory.
-1) Create a new python venv and activate it
-  ```
-  python -m venv .env/kp2bw
 
-  Windows:
-  .env\kp2bw\Scripts\activate
-  
-  Linux:
-  .env/kp2bw/bin/activate
-  ```
-1) pip install .
+Requires Python >=3.9 and pip.
+
+```sh
+python -m venv .env/kp2bw
+source .env/kp2bw/bin/activate   # Windows: .env\kp2bw\Scripts\activate
+pip install .
+```
 
 ## Usage
-First, make sure you install the Bitwarden CLI tool on your system (https://help.bitwarden.com/article/cli/). After installing, set up the client:
 
-If you use a on premise installation, set your url like this:
+### Prerequisites
+
+Install the [Bitwarden CLI](https://help.bitwarden.com/article/cli/) and log in:
+
+```sh
+bw login <username>
 ```
+
+For self-hosted instances, set the server URL first:
+
+```sh
 bw config server https://your-domain.com/
 ```
 
-Now, you have to log into your account once:
-```
-bw login username
-```
+### Import
 
-After that, you can use the kp2bw.py tool to import the data. This file is located in the kp2bw folder. Execute it using:
-```
+```sh
 kp2bw passwords.kdbx
 ```
 
-The help text of the tool is listed below:
-```
-usage: kp2bw [-h] [-kppw KP_PW] [-kpkf KP_KEYFILE] [-bwpw BW_PW] [-y] [-v] keepass_file [-import_tags tags1 tags2] 
+### Options
 
-KeePass 2.x to Bitwarden converter by @jampe
-
-positional arguments:
-  keepass_file      Path to your KeePass 2.x db.
-
-optional arguments:
-  -h, --help        show this help message and exit
-  -kppw KP_PW       KeePass db password
-  -kpkf KP_KEYFILE  KeePass db key file
-  -bwpw BW_PW       Bitwarden Password
-  -bworg BW_OrgId   Id of Organization to Upload Into
-  -bwcoll BW_CollId Id of Org-Collection, or 'auto' to use name from toplevel-folders
-  -import_tags      Only import items with tags
-  -path2name        Prepend folderpath of entries to each name
-  -path2nameskip PATH2NAMESKIP
-                    Skip first X folders for path2name (default: 1)
-  -y                Skips the confirm bw installation question
-  -v                Verbose output
-```
+| Flag | Description |
+|------|-------------|
+| `keepass_file` | Path to KeePass 2.x database |
+| `-kppw` | KeePass database password |
+| `-kpkf` | KeePass database key file |
+| `-bwpw` | Bitwarden master password |
+| `-bworg` | Bitwarden Organization ID |
+| `-bwcoll` | Organization Collection ID, or `auto` to match by top-level folder name |
+| `-import_tags` | Only import items with given tags (space-separated) |
+| `-path2name` | Prepend folder path to entry names |
+| `-path2nameskip` | Skip first N folders when using `-path2name` (default: 1) |
+| `-y` | Skip Bitwarden setup confirmation |
+| `-v` | Verbose output |
 
 ## Troubleshooting
-### Invalid master password error on bw unlock
+
+### Invalid master password on unlock
 
 ```
 DEBUG: -- Executing command: bw unlock My?Master>>Password123 --raw
 DEBUG:   |- Output: b'Invalid master password.'
-DEBUG: -- Executing command: bw sync --session 'Invalid master password.'
 ```
 
-The solution is to encapsulate the master password in double quotes (when you're typing it in at the password prompt), then the bw unlock command will run successfully and sync will continue. Thanks @readysteadywhoa for reporting this and providing a solution!
+Wrap the password in double quotes at the password prompt. The `bw unlock`
+command does not handle shell special characters in unquoted input.
+
+## License
+
+MIT. Copyright Daniel Jampen.
 
