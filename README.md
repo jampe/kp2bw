@@ -6,7 +6,7 @@
 > **[kjanat/kp2bw](https://github.com/kjanat/kp2bw)** (v3.7.0+, Python >=3.14).
 > The fork uses `bw serve` HTTP transport instead of the subprocess-based approach
 > in this version, supports nested collections, proper org/collection item creation,
-> and ongoing bug fixes. New users should use the fork.
+> and ongoing bug fixes. Should you miss any features here, try to use the maintained fork.
 
 ---
 
@@ -18,6 +18,8 @@ Compared to Bitwarden's built-in importer:
   which are removed after upload)
 - Resolves KeePass `{REF:...}` entries (username, password) -- matching
   entries get merged URLs; non-matching entries are created separately
+- TOTP/OTP migrated from KeePass (standard `otp` field and common custom
+  properties like `otpauth`, `TOTP Settings`, etc.)
 - Custom properties imported as Bitwarden custom fields; values over 10,000
   characters become attachments
 - Attachments imported from KeePass
@@ -29,6 +31,20 @@ Compared to Bitwarden's built-in importer:
 - Windows, macOS, Linux
 
 ## Installation
+
+### Pre-built (recommended)
+
+Download the latest build artifact for your platform from
+[GitHub Actions](https://github.com/jampe/kp2bw/actions/workflows/build.yml)
+(select the most recent successful run, scroll to Artifacts).
+
+Each artifact is a zip containing a `.whl` file. Install it with pip:
+
+```sh
+pip install kp2bw-<platform>-py<version>.zip/kp2bw-*.whl
+```
+
+### From source
 
 Requires Python >=3.9 and pip.
 
