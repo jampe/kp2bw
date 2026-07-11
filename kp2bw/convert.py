@@ -9,6 +9,7 @@ from .bitwardenclient import BitwardenClient
 
 KP_REF_IDENTIFIER = "{REF:"
 MAX_BW_ITEM_LENGTH = 10 * 1000
+OTP_CUSTOM_PROPERTY_KEYS = ("otp", "otpauth", "otpauth-secret", "TOTP Settings", "TOTP Secret")
 
 
 def xpath_escape(text: str) -> str:
@@ -174,10 +175,16 @@ class Converter():
         # reset data structures
         self._kp_ref_entries = []
         self._entries = {}
-        custom_protected = []
 
         logging.info(f"Found {len(kp.entries)} entries in KeePass DB. Parsing now...")
         for entry in kp.entries:
+            # Fall back to custom properties for OTP if standard field is empty
+            if not entry.otp:
+                for otp_key in OTP_CUSTOM_PROPERTY_KEYS:
+                    if otp_key in entry.custom_properties:
+                        entry.otp = entry.custom_properties[otp_key]
+                        break
+
             # prevent not iterable errors at "in" checks
             username = entry.username if entry.username else ''
             password = entry.password if entry.password else ''
@@ -187,6 +194,7 @@ class Converter():
                 self._kp_ref_entries.append(entry)
                 continue
 
+            custom_protected = []
             for field, value in entry.custom_properties.items():
                 if entry._xpath('String[Key[text()={}]]/Value'.format(xpath_escape(field)), first=True).attrib.get("Protected", "False") == "True":
                     custom_protected.append(field)
@@ -239,9 +247,12 @@ class Converter():
                 if username_and_password_match:
                     # => add url to bw_item => username / pw identical
                     ref_entry["login"]["uris"].append({"match": None,"uri": kp_entry.url})
+                    # Merge TOTP from the REF entry if the original lacks one
+                    if kp_entry.otp and not ref_entry["login"].get("totp"):
+                        ref_entry["login"]["totp"] = kp_entry.otp
                 else:
                     # => create new bitwarden item
-                    self._add_bw_entry_to_entries_dict(kp_entry, None)
+                    self._add_bw_entry_to_entries_dict(kp_entry, [])
 
             except Exception as e:
                 logging.warning(f"!! Could not resolve entry for {kp_entry.group.path}{kp_entry.title} [{str(kp_entry.uuid)}] !!")
