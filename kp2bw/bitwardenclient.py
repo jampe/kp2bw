@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import re
 import shutil
 import subprocess
 import tempfile
@@ -11,7 +12,7 @@ class BitwardenClient():
 
     def __init__(self, password, orgId):
         # check for bw cli installation
-        if not "bitwarden" in self._exec(["bw", "--version"]):
+        if not shutil.which("bw") or not re.match(r"^\d+\.\d+", self._exec(["bw", "--version"]).strip()):
             raise Exception("Bitwarden Cli not installed! See https://help.bitwarden.com/article/cli/#download--install for help")
 
         # save org
