@@ -1,6 +1,8 @@
+import base64
 import json
 import logging
 import os
+import re
 import shutil
 import subprocess
 import tempfile
@@ -11,7 +13,7 @@ class BitwardenClient():
 
     def __init__(self, password, orgId):
         # check for bw cli installation
-        if not "bitwarden" in self._exec(["bw", "--version"]):
+        if not shutil.which("bw") or not re.match(r"^\d+\.\d+", self._exec(["bw", "--version"]).strip()):
             raise Exception("Bitwarden Cli not installed! See https://help.bitwarden.com/article/cli/#download--install for help")
 
         # save org
@@ -99,7 +101,7 @@ class BitwardenClient():
             return
 
         data = {"name": folder}
-        json_bytes = json.dumps(data).encode("utf-8")
+        json_bytes = base64.b64encode(json.dumps(data).encode("utf-8"))
 
         output = self._exec(["bw", "create", "folder", "--session", self._key], stdin_data=json_bytes)
 
@@ -120,7 +122,7 @@ class BitwardenClient():
             # set id
             entry["folderId"] = self._folders[folder]
 
-        json_bytes = json.dumps(entry).encode("utf-8")
+        json_bytes = base64.b64encode(json.dumps(entry).encode("utf-8"))
 
         output = self._exec(["bw", "create", "item", "--session", self._key], stdin_data=json_bytes)
 
@@ -178,7 +180,7 @@ class BitwardenClient():
         entry['name'] = collectionname
         entry['organizationId'] = self._orgId
 
-        json_bytes = json.dumps(entry).encode("utf-8")
+        json_bytes = base64.b64encode(json.dumps(entry).encode("utf-8"))
 
         output = self._exec(["bw", "create", "org-collection", "--organizationid", self._orgId, "--session", self._key], stdin_data=json_bytes)
         if (not output): return None
